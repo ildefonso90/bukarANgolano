@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+  --color-angola-red: #D81E05;
+  --color-angola-black: #000000;
+  --color-angola-yellow: #F7D117;
+  --color-angola-earth: #8B4513;
+  --color-angola-sand: #F4E4BC;
+}
+
+body {
+  @apply bg-angola-sand text-angola-black;
+}

@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and purchase history",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "purchasedTccs": { "type": "array", "items": { "type": "string" } },
+        "role": { "type": "string", "enum": ["user", "admin"] }
+      },
+      "required": ["uid", "email"]
+    },
+    "TCC": {
+      "title": "TCC",
+      "description": "Monograph or TCC details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "author": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "previewLink": { "type": "string" },
+        "driveFileId": { "type": "string" },
+        "price": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "category", "price", "driveFileId"]
+    },
+    "Purchase": {
+      "title": "Purchase",
+      "description": "Transaction record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "tccId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "completed", "failed"] },
+        "amount": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "tccId", "status", "amount"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile"
+    },
+    "/tccs/{tccId}": {
+      "schema": "TCC",
+      "description": "TCC documents"
+    },
+    "/purchases/{purchaseId}": {
+      "schema": "Purchase",
+      "description": "Purchase records"
+    }
+  }
+}
