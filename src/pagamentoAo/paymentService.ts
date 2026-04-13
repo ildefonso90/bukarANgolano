@@ -1,4 +1,4 @@
-import { db } from '../firebase';
+import { db } from '../firebase.ts';
 import { doc, updateDoc, arrayUnion, setDoc, getDoc } from 'firebase/firestore';
 
 export async function iniciarPagamento(userId: string, tccId: string) {

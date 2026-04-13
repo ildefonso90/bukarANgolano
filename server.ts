@@ -1,14 +1,14 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
-import dotenv from "dotenv";
 
-// Import payment logic
-import { paymentRouter } from "./src/pagamentoAo/paymentController";
+// Import payment logic - fixing extensions for Node 22 type stripping
+import { paymentRouter } from "./src/pagamentoAo/paymentController.ts";
 import { driveRouter } from "./src/GoogleDriveManuais/driveController.ts";
-
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

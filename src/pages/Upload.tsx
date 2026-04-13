@@ -45,8 +45,9 @@ export default function Upload() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           titulo: formData.title,
-          tipo: formData.type,
+          tipo: formData.type, // pdf, video, book, etc
           isFree: formData.isFree,
+          mimeType: file.type,
         }),
       });
       

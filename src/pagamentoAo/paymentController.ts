@@ -1,5 +1,5 @@
 import express from 'express';
-import { iniciarPagamento, confirmarPagamento, validarAcesso, liberarConteudo } from './paymentService';
+import { iniciarPagamento, confirmarPagamento, validarAcesso, liberarConteudo } from './paymentService.ts';
 
 const router = express.Router();
 
