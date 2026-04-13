@@ -1,43 +1,32 @@
-# BukiAngolano 🇦🇴
+# BukiAngolano 🇦🇴 - Ecossistema Estudantil
 
-Plataforma de venda e visualização de monografias e TCCs para estudantes angolanos.
+Plataforma de partilha de conhecimento académico para estudantes angolanos, com foco em acessibilidade e monetização justa.
 
-## 🚀 Funcionamento
+## 🚀 Arquitetura do Ecossistema
 
-O BukiAngolano funciona como um ecossistema integrado para a partilha de conhecimento académico:
+O sistema utiliza uma arquitetura distribuída para garantir escalabilidade e zero carga no servidor principal:
 
-1.  **Catálogo**: Estudantes podem navegar por uma vasta biblioteca de TCCs e monografias.
-2.  **Preview**: Cada trabalho permite uma visualização gratuita das primeiras páginas para garantir a qualidade antes da compra.
-3.  **Pagamento**: Integração com sistemas locais (Multicaixa/Transferência) via `pagamentoAo`.
-4.  **Desbloqueio**: Após a confirmação do pagamento, o sistema utiliza o `GoogleDriveManuais` para libertar o acesso ao ficheiro completo armazenado de forma segura.
+1.  **Frontend (React)**: Gere a interface e o upload direto para o Google Drive via tokens temporários.
+2.  **Backend (Express)**: Valida metadados, gere tokens de upload, controla acessos e redundância.
+3.  **Base de Dados (Firestore)**: Armazena metadados de conteúdos, perfis de utilizadores e registos de compras.
+4.  **Storage Layer (Google Drive Multi-API)**: Armazenamento distribuído em múltiplas contas com redundância automática.
 
-## 🛠️ Manuseio e Gestão
+## 🛠️ Fluxo de Upload (Pipeline Controlado)
 
-### Como Adicionar Novos Trabalhos
-Os trabalhos são geridos via Firestore. Cada documento na coleção `tccs` deve conter:
-- `title`: Título do trabalho.
-- `author`: Nome do autor.
-- `price`: Preço em Kwanzas (AOA).
-- `driveFileId`: ID do ficheiro no Google Drive.
-- `previewUrl`: Link para a amostra gratuita.
-- `accountId`: ID da conta do Drive (definida em `GoogleDriveManuais/config.ts`).
+Para garantir que o servidor não fique sobrecarregado, o upload é feito diretamente do navegador para o Google Drive:
+1.  O utilizador envia os metadados para o backend.
+2.  O backend valida o utilizador e gera um token de acesso temporário e uma URL de upload.
+3.  O frontend envia o ficheiro diretamente para o Google Drive.
+4.  O backend regista o conteúdo como "pendente" para moderação.
 
-### Gestão de Múltiplas Contas Drive
-No ficheiro `src/GoogleDriveManuais/config.ts`, podes adicionar novas APIs e contas para distribuir o armazenamento. O sistema seleciona a conta correta baseada no `accountId` do trabalho.
+## 💰 Modelo de Negócio
 
-### Processamento de Pagamentos
-A lógica reside em `src/pagamentoAo`. Atualmente, o sistema suporta um fluxo de checkout simulado que pode ser ligado a gateways locais angolanos.
+-   **Conteúdo Grátis**: A maioria do conteúdo é livre para todos os estudantes.
+-   **Conteúdo Pago (Pacotes)**: Alguns materiais premium são agrupados em pacotes de **2.000 Kz**. O acesso é libertado após confirmação de pagamento.
 
 ## 📁 Estrutura do Projeto
-- `/src/components`: Componentes de interface reutilizáveis.
-- `/src/pages`: Páginas principais (Home, Catálogo, Detalhes).
-- `/src/pagamentoAo`: Lógica de processamento de pagamentos.
-- `/src/GoogleDriveManuais`: Integração multi-conta com Google Drive.
-- `/src/context`: Gestão de estado (Autenticação Firebase).
-- `server.ts`: Servidor Express que gere a API e serve a aplicação.
-
-## 💻 Desenvolvimento
-- `npm run dev`: Inicia o servidor de desenvolvimento.
-- `npm run build`: Compila a aplicação para produção.
-- `npm start`: Inicia o servidor em ambiente de produção.
+- `/src/GoogleDriveManuais`: Gestão de storage distribuído e redundância.
+- `/src/pagamentoAo`: Processamento de pagamentos locais (Kwanza).
+- `/src/pages/Upload.tsx`: Pipeline de contribuição de conteúdo.
+- `/src/pages/ContentDetail.tsx`: Visualizador e controlo de acesso.
 

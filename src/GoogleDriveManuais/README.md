@@ -2,22 +2,18 @@
 
 Esta pasta contém a lógica de integração com múltiplas contas do Google Drive para armazenamento de manuais e TCCs.
 
-## 🛠️ Como Funciona
-O sistema é capaz de gerir ficheiros distribuídos por diferentes contas do Google Drive. Isto é útil para contornar limites de armazenamento ou organizar materiais por categorias.
+## 🛠️ Como Funciona (Storage Distribuído)
+O sistema utiliza um modelo de "Storage Pools" para distribuir o conteúdo e garantir alta disponibilidade.
 
-### Configuração (`config.ts`)
-Adiciona novas contas no array `driveAccounts`:
-```typescript
-{
-  id: 'conta_engenharia',
-  apiKey: '...',
-  folderId: '...'
-}
-```
+### Storage Pools
+- **Free Pool**: Contas (`primary`, `secondary`) para conteúdo gratuito.
+- **Paid Pool**: Contas (`paid_primary`, `paid_backup`) para conteúdo premium.
 
-### Serviço (`driveService.ts`)
-A função `getProtectedLink` recebe um `accountId`. Se não for fornecido, utiliza a conta `primary` por defeito.
+### Redundância Automática
+Cada ficheiro é idealmente espelhado em duas contas. No banco de dados, guardamos:
+- `fileIdPrimary`: ID na conta principal.
+- `fileIdBackup`: ID na conta de redundância.
 
-## 🔒 Segurança
-Os links gerados são protegidos. O sistema verifica as permissões do utilizador (se o pagamento foi confirmado) antes de fornecer o acesso final ao ficheiro.
+### Upload Direto (Zero Server Load)
+O backend gera um `accessToken` temporário e uma `uploadUrl`. O frontend faz o upload diretamente para os servidores da Google, poupando largura de banda e CPU do nosso servidor.
 

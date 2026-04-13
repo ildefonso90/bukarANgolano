@@ -1,35 +1,36 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
-import TccCard from '../components/TccCard';
+import ContentCard from '../components/ContentCard';
 import { Search, Filter, Loader2 } from 'lucide-react';
 
 export default function Catalog() {
-  const [tccs, setTccs] = useState<any[]>([]);
+  const [contents, setContents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todas');
 
   useEffect(() => {
-    const fetchTccs = async () => {
+    const fetchContents = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, 'tccs'));
+        const q = query(collection(db, 'contents'), where('status', '==', 'approved'));
+        const querySnapshot = await getDocs(q);
         const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setTccs(data);
+        setContents(data);
       } catch (error) {
-        console.error("Error fetching TCCs:", error);
+        console.error("Error fetching contents:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchTccs();
+    fetchContents();
   }, []);
 
-  const categories = ['Todas', ...new Set(tccs.map(t => t.category))];
+  const categories = ['Todas', ...new Set(contents.map(t => t.category))];
 
-  const filteredTccs = tccs.filter(t => {
+  const filteredContents = contents.filter(t => {
     const matchesSearch = t.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         t.description.toLowerCase().includes(searchTerm.toLowerCase());
+                         (t.subtitle && t.subtitle.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = selectedCategory === 'Todas' || t.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -38,28 +39,28 @@ export default function Catalog() {
     <div className="space-y-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
-          <h1 className="text-4xl font-black text-slate-900">Catálogo de Trabalhos</h1>
-          <p className="text-slate-500">Encontre o material perfeito para sua pesquisa.</p>
+          <h1 className="text-4xl font-black text-angola-black">Biblioteca Digital</h1>
+          <p className="text-angola-black/50 font-medium">Encontre o material perfeito para os teus estudos.</p>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
           <div className="relative flex-1 sm:w-80">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-angola-black/30" />
             <input 
               type="text"
               placeholder="Buscar por título ou tema..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none"
+              className="w-full pl-12 pr-4 py-3 bg-white border border-angola-black/10 rounded-2xl focus:ring-2 focus:ring-angola-red focus:border-transparent transition-all outline-none shadow-sm"
             />
           </div>
           
           <div className="relative">
-            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-angola-black/30" />
             <select 
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full pl-12 pr-10 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none appearance-none cursor-pointer"
+              className="w-full pl-12 pr-10 py-3 bg-white border border-angola-black/10 rounded-2xl focus:ring-2 focus:ring-angola-red focus:border-transparent transition-all outline-none appearance-none cursor-pointer shadow-sm"
             >
               {categories.map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
@@ -71,18 +72,18 @@ export default function Catalog() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-          <p className="text-slate-500 font-medium">Carregando catálogo...</p>
+          <Loader2 className="w-10 h-10 text-angola-red animate-spin" />
+          <p className="text-angola-black/50 font-medium">Carregando biblioteca...</p>
         </div>
-      ) : filteredTccs.length > 0 ? (
+      ) : filteredContents.length > 0 ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {filteredTccs.map((tcc: any) => (
-            <TccCard key={tcc.id} tcc={tcc} />
+          {filteredContents.map((content: any) => (
+            <ContentCard key={content.id} content={content} />
           ))}
         </div>
       ) : (
-        <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
-          <p className="text-slate-500 text-lg">Nenhum trabalho encontrado para sua busca.</p>
+        <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-angola-black/10">
+          <p className="text-angola-black/50 text-lg">Nenhum conteúdo encontrado para a tua busca.</p>
         </div>
       )}
     </div>

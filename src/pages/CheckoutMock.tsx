@@ -10,6 +10,7 @@ export default function CheckoutMock() {
   
   const userId = searchParams.get('userId');
   const tccId = searchParams.get('tccId');
+  const bundleId = searchParams.get('bundleId');
 
   const handlePayment = async () => {
     setStatus('processing');
@@ -19,7 +20,7 @@ export default function CheckoutMock() {
       const response = await fetch('/api/payments/webhook', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, tccId })
+        body: JSON.stringify({ userId, tccId, bundleId })
       });
       
       if (response.ok) {
@@ -38,52 +39,58 @@ export default function CheckoutMock() {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-2xl w-full max-w-md space-y-8"
+        className="bg-white p-10 rounded-[2.5rem] border border-angola-black/5 shadow-2xl w-full max-w-md space-y-8"
       >
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-black text-slate-900">Checkout Seguro</h1>
-          <p className="text-slate-500 text-sm">Ambiente de teste simulado</p>
+          <h1 className="text-2xl font-black text-angola-black">Checkout Seguro</h1>
+          <p className="text-angola-black/40 text-sm">Ambiente de teste simulado (BukiAngolano)</p>
         </div>
 
         {status === 'success' ? (
           <div className="text-center space-y-6 py-4">
-            <div className="bg-emerald-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+            <div className="bg-green-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-10 h-10 text-green-600" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-slate-900">Pagamento Confirmado!</h2>
-              <p className="text-slate-500">O conteúdo foi desbloqueado na sua conta.</p>
+              <h2 className="text-xl font-bold text-angola-black">Pagamento Confirmado!</h2>
+              <p className="text-angola-black/40">O conteúdo foi desbloqueado na tua conta.</p>
             </div>
             <button 
-              onClick={() => navigate(`/tcc/${tccId}`)}
-              className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-indigo-600 transition-all"
+              onClick={() => navigate(tccId ? `/content/${tccId}` : '/catalog')}
+              className="w-full bg-angola-black text-white py-4 rounded-2xl font-bold hover:bg-angola-red transition-all"
             >
-              Voltar para o Trabalho
+              Voltar à Biblioteca
             </button>
           </div>
         ) : (
           <>
             <div className="space-y-4">
-              <div className="bg-slate-50 p-4 rounded-2xl space-y-3">
+              <div className="bg-angola-sand/20 p-4 rounded-2xl space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">ID do Usuário:</span>
-                  <span className="font-mono text-[10px] text-slate-400">{userId}</span>
+                  <span className="text-angola-black/40">ID do Usuário:</span>
+                  <span className="font-mono text-[10px] text-angola-black/30">{userId}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">ID do TCC:</span>
-                  <span className="font-mono text-[10px] text-slate-400">{tccId}</span>
+                {bundleId && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-angola-black/40">Pacote:</span>
+                    <span className="font-bold text-angola-black">{bundleId}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-lg font-black border-t border-angola-black/5 pt-3">
+                  <span className="text-angola-black">Total:</span>
+                  <span className="text-angola-red">2.000 Kz</span>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Número do Cartão (Simulado)</label>
+                <label className="text-xs font-bold text-angola-black/40 uppercase tracking-widest">Número do Cartão (Simulado)</label>
                 <div className="relative">
-                  <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-angola-black/20" />
                   <input 
                     type="text" 
                     disabled
                     value="**** **** **** 4242"
-                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-400 font-mono"
+                    className="w-full pl-12 pr-4 py-4 bg-angola-sand/10 border border-angola-black/5 rounded-2xl text-angola-black/30 font-mono"
                   />
                 </div>
               </div>
@@ -92,7 +99,7 @@ export default function CheckoutMock() {
             <button 
               onClick={handlePayment}
               disabled={status === 'processing'}
-              className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-3 shadow-xl shadow-indigo-100 disabled:opacity-50"
+              className="w-full bg-angola-red text-white py-4 rounded-2xl font-bold text-lg hover:bg-red-700 transition-all flex items-center justify-center gap-3 shadow-xl shadow-red-900/10 disabled:opacity-50"
             >
               {status === 'processing' ? (
                 <>
@@ -104,7 +111,7 @@ export default function CheckoutMock() {
               )}
             </button>
 
-            <div className="flex items-center justify-center gap-2 text-slate-400 text-xs font-medium">
+            <div className="flex items-center justify-center gap-2 text-angola-black/30 text-xs font-medium">
               <ShieldCheck className="w-4 h-4" />
               Pagamento 100% Seguro & Criptografado
             </div>

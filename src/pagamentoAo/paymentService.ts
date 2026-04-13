@@ -11,29 +11,21 @@ export async function iniciarPagamento(userId: string, tccId: string) {
 }
 
 export async function confirmarPagamento(event: any) {
-  const { userId, tccId } = event;
+  const { userId, tccId, bundleId } = event;
   
-  if (userId && tccId) {
-    await registrarCompra(userId, tccId);
-    await liberarConteudo(userId, tccId);
+  if (userId && (tccId || bundleId)) {
+    if (bundleId) {
+      await liberarPacote(userId, bundleId);
+    } else if (tccId) {
+      await liberarConteudo(userId, tccId);
+    }
   }
 }
 
-export async function registrarCompra(userId: string, tccId: string) {
-  const purchaseId = `${userId}_${tccId}`;
-  const purchaseRef = doc(db, 'purchases', purchaseId);
-  
-  // Get TCC price
-  const tccRef = doc(db, 'tccs', tccId);
-  const tccSnap = await getDoc(tccRef);
-  const price = tccSnap.exists() ? tccSnap.data().price : 0;
-
-  await setDoc(purchaseRef, {
-    userId,
-    tccId,
-    status: 'completed',
-    amount: price,
-    timestamp: new Date().toISOString()
+export async function liberarPacote(userId: string, bundleId: string) {
+  const userRef = doc(db, 'users', userId);
+  await updateDoc(userRef, {
+    purchasedBundleIds: arrayUnion(bundleId)
   });
 }
 

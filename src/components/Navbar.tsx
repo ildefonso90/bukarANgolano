@@ -53,7 +53,8 @@ export default function Navbar() {
             
             <div className="hidden md:flex items-center gap-8">
               <Link to="/" className="text-angola-red font-bold border-b-2 border-angola-red pb-1">Home</Link>
-              <Link to="/catalog" className="text-slate-600 hover:text-angola-red font-bold transition-colors">Todos Trabalhos</Link>
+              <Link to="/catalog" className="text-slate-600 hover:text-angola-red font-bold transition-colors">Biblioteca</Link>
+              <Link to="/upload" className="text-slate-600 hover:text-angola-red font-bold transition-colors">Partilhar</Link>
               <Link to="/dashboard" className="text-slate-600 hover:text-angola-red font-bold transition-colors">Meus Itens</Link>
               
               <div className="relative group">

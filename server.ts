@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 
 // Import payment logic
 import { paymentRouter } from "./src/pagamentoAo/paymentController";
+import { driveRouter } from "./src/GoogleDriveManuais/driveController.ts";
 
 dotenv.config();
 
@@ -25,6 +26,9 @@ async function startServer() {
 
   // Payment Routes
   app.use("/api/payments", paymentRouter);
+  
+  // Drive Routes
+  app.use("/api/drive", driveRouter);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

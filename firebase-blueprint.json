@@ -2,61 +2,63 @@
   "entities": {
     "User": {
       "title": "User",
-      "description": "User profile and purchase history",
+      "description": "User profile and permissions",
       "type": "object",
       "properties": {
         "uid": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "displayName": { "type": "string" },
-        "purchasedTccs": { "type": "array", "items": { "type": "string" } },
-        "role": { "type": "string", "enum": ["user", "admin"] }
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "purchasedBundleIds": { "type": "array", "items": { "type": "string" } }
       },
       "required": ["uid", "email"]
     },
-    "TCC": {
-      "title": "TCC",
-      "description": "Monograph or TCC details",
+    "Content": {
+      "title": "Content",
+      "description": "Educational material (PDF, Video, Course, etc.)",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
         "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "type": { "type": "string", "enum": ["pdf", "video", "course", "lesson", "manual", "book"] },
         "author": { "type": "string" },
         "category": { "type": "string" },
-        "description": { "type": "string" },
-        "previewLink": { "type": "string" },
-        "driveFileId": { "type": "string" },
-        "price": { "type": "number" },
+        "isFree": { "type": "boolean" },
+        "bundleId": { "type": "string", "description": "If paid, which bundle it belongs to" },
+        "fileIdPrimary": { "type": "string" },
+        "fileIdBackup": { "type": "string" },
+        "previewId": { "type": "string" },
+        "userId": { "type": "string", "description": "Uploader ID" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["title", "category", "price", "driveFileId"]
+      "required": ["title", "type", "category", "isFree", "userId", "status"]
     },
-    "Purchase": {
-      "title": "Purchase",
-      "description": "Transaction record",
+    "Bundle": {
+      "title": "Bundle",
+      "description": "A paid package of content (e.g., 2000 Kz bundle)",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "tccId": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "completed", "failed"] },
-        "amount": { "type": "number" },
-        "timestamp": { "type": "string", "format": "date-time" }
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "description": { "type": "string" },
+        "contentIds": { "type": "array", "items": { "type": "string" } }
       },
-      "required": ["userId", "tccId", "status", "amount"]
+      "required": ["name", "price"]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "User",
-      "description": "User profile"
+      "description": "User profiles"
     },
-    "/tccs/{tccId}": {
-      "schema": "TCC",
-      "description": "TCC documents"
+    "/contents/{contentId}": {
+      "schema": "Content",
+      "description": "All educational materials"
     },
-    "/purchases/{purchaseId}": {
-      "schema": "Purchase",
-      "description": "Purchase records"
+    "/bundles/{bundleId}": {
+      "schema": "Bundle",
+      "description": "Paid content packages"
     }
   }
 }

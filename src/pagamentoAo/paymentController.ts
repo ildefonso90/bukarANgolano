@@ -1,5 +1,5 @@
 import express from 'express';
-import { iniciarPagamento, confirmarPagamento, validarAcesso, registrarCompra, liberarConteudo } from './paymentService';
+import { iniciarPagamento, confirmarPagamento, validarAcesso, liberarConteudo } from './paymentService';
 
 const router = express.Router();
 
@@ -31,6 +31,20 @@ router.get('/validate/:userId/:tccId', async (req, res) => {
     const { userId, tccId } = req.params;
     const hasAccess = await validarAcesso(userId, tccId);
     res.json({ hasAccess });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Iniciar sessão de pagamento para pacote (Bundle)
+router.post('/checkout-bundle', async (req, res) => {
+  try {
+    const { userId, bundleId } = req.body;
+    // Mock checkout session
+    res.json({ 
+      url: `/checkout-mock?userId=${userId}&bundleId=${bundleId}`,
+      status: 'pending' 
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

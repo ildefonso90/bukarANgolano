@@ -2,35 +2,39 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Search, BookOpen, ShieldCheck, CreditCard, ArrowRight, Loader2 } from 'lucide-react';
-import { collection, getDocs, limit, query } from 'firebase/firestore';
+import { collection, getDocs, limit, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
-import TccCard from '../components/TccCard';
+import ContentCard from '../components/ContentCard';
 
 export default function Home() {
-  const [tccs, setTccs] = useState<any[]>([]);
+  const [contents, setContents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const fetchTccs = async () => {
+    const fetchContents = async () => {
       try {
-        const q = query(collection(db, 'tccs'), limit(4));
+        const q = query(
+          collection(db, 'contents'), 
+          where('status', '==', 'approved'),
+          limit(4)
+        );
         const querySnapshot = await getDocs(q);
         const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setTccs(data);
+        setContents(data);
       } catch (error) {
-        console.error("Error fetching TCCs:", error);
+        console.error("Error fetching contents:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchTccs();
+    fetchContents();
   }, []);
 
   return (
     <div className="pb-20">
       {/* Hero Section */}
-      <section className="relative min-h-[600px] flex items-center bg-[#F8F9FA] overflow-hidden">
+      <section className="relative min-h-[600px] flex items-center bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full grid lg:grid-cols-2 gap-12 items-center py-20">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -122,15 +126,15 @@ export default function Home() {
             <Loader2 className="w-10 h-10 text-angola-red animate-spin" />
             <p className="text-slate-500 font-medium">Carregando catálogo...</p>
           </div>
-        ) : tccs.length > 0 ? (
+        ) : contents.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {tccs.map(tcc => (
-              <TccCard key={tcc.id} tcc={tcc} />
+            {contents.map(content => (
+              <ContentCard key={content.id} content={content} />
             ))}
           </div>
         ) : (
           <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
-            <p className="text-slate-500 text-lg">Nenhum trabalho disponível no momento.</p>
+            <p className="text-slate-500 text-lg">Nenhum conteúdo disponível no momento.</p>
           </div>
         )}
       </section>
