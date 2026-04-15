@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, dataConnect } from '../firebase';
+import { executeQuery, queryRef } from 'firebase/data-connect';
 import ContentCard from '../components/ContentCard';
 import { Search, Filter, Loader2 } from 'lucide-react';
 
@@ -13,12 +14,20 @@ export default function Catalog() {
   useEffect(() => {
     const fetchContents = async () => {
       try {
-        const q = query(collection(db, 'contents'), where('status', '==', 'approved'));
-        const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setContents(data);
+        const result = await executeQuery(queryRef(dataConnect, 'ListApprovedContents'));
+        const data = result.data as { contents: any[] };
+        setContents(data.contents);
       } catch (error) {
-        console.error("Error fetching contents:", error);
+        console.error("Error fetching contents from Data Connect:", error);
+        // Fallback para Firestore
+        try {
+          const q = query(collection(db, 'contents'), where('status', '==', 'approved'));
+          const querySnapshot = await getDocs(q);
+          const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setContents(data);
+        } catch (fsError) {
+          console.error("Firestore fallback failed:", fsError);
+        }
       } finally {
         setLoading(false);
       }

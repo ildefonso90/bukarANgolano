@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, dataConnect } from '../firebase';
+import { executeQuery, queryRef } from 'firebase/data-connect';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { FileText, Video, Lock, CheckCircle2, CreditCard, Loader2, ArrowLeft, Download, User as UserIcon, ShieldCheck } from 'lucide-react';
@@ -22,15 +23,33 @@ export default function ContentDetail() {
     const fetchContent = async () => {
       if (!id) return;
       try {
-        const docRef = doc(db, 'contents', id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setContent({ id: docSnap.id, ...docSnap.data() });
+        // Tentar Data Connect primeiro
+        const result = await executeQuery(queryRef(dataConnect, 'GetContent', { id }));
+        const data = result.data as { content: any };
+        if (data.content) {
+          setContent(data.content);
         } else {
-          navigate('/catalog');
+          // Fallback para Firestore
+          const docRef = doc(db, 'contents', id);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setContent({ id: docSnap.id, ...docSnap.data() });
+          } else {
+            navigate('/catalog');
+          }
         }
       } catch (error) {
         console.error("Error fetching content:", error);
+        // Fallback imediato para Firestore em caso de erro no Data Connect
+        try {
+          const docRef = doc(db, 'contents', id);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setContent({ id: docSnap.id, ...docSnap.data() });
+          }
+        } catch (fsError) {
+          console.error("Firestore fallback failed:", fsError);
+        }
       } finally {
         setLoading(false);
       }
@@ -113,11 +132,29 @@ export default function ContentDetail() {
             <div className="bg-white p-2 rounded-[2.5rem] shadow-2xl border border-angola-black/5 overflow-hidden">
               <div className="aspect-video bg-slate-50 rounded-[2rem] overflow-hidden relative group">
                 {hasAccess ? (
-                  <iframe 
-                    src={`https://drive.google.com/file/d/${content.fileIdPrimary}/preview`} 
-                    className="w-full h-full border-none"
-                    title="Content Viewer"
-                  />
+                  content.storageType === 'firebase' ? (
+                    content.type === 'pdf' || content.type === 'manual' || content.type === 'book' ? (
+                      <iframe 
+                        src={content.fileUrl} 
+                        className="w-full h-full border-none"
+                        title="Content Viewer"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center space-y-4">
+                        <FileText className="w-16 h-16 text-angola-red" />
+                        <h3 className="text-xl font-bold">Ficheiro Pronto</h3>
+                        <a href={content.fileUrl} target="_blank" rel="noopener noreferrer" className="bg-angola-black text-white px-8 py-3 rounded-xl font-bold">
+                          Abrir Ficheiro
+                        </a>
+                      </div>
+                    )
+                  ) : (
+                    <iframe 
+                      src={`https://drive.google.com/file/d/${content.fileIdPrimary}/preview`} 
+                      className="w-full h-full border-none"
+                      title="Content Viewer"
+                    />
+                  )
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center space-y-6">
                     <div className="bg-slate-100 p-8 rounded-full">
@@ -187,7 +224,7 @@ export default function ContentDetail() {
             {hasAccess && (
               <div className="space-y-3">
                 <a 
-                  href={`https://drive.google.com/file/d/${content.fileIdPrimary}/view`}
+                  href={content.storageType === 'firebase' ? content.fileUrl : `https://drive.google.com/file/d/${content.fileIdPrimary}/view`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full flex items-center justify-center gap-2 bg-angola-black text-white py-5 rounded-2xl font-black hover:bg-angola-red transition-all shadow-xl"
@@ -196,7 +233,7 @@ export default function ContentDetail() {
                   Baixar Ficheiro
                 </a>
                 <p className="text-[10px] text-center text-angola-black/30 font-bold italic">
-                  * Se o link falhar, tenta a réplica de segurança.
+                  {content.storageType === 'firebase' ? '* Ficheiro armazenado de forma segura no Firebase.' : '* Se o link falhar, tenta a réplica de segurança.'}
                 </p>
               </div>
             )}

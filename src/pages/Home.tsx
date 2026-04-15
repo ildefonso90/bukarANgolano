@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Search, BookOpen, ShieldCheck, CreditCard, ArrowRight, Loader2 } from 'lucide-react';
 import { collection, getDocs, limit, query, where } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, dataConnect } from '../firebase';
+import { executeQuery, queryRef } from 'firebase/data-connect';
 import ContentCard from '../components/ContentCard';
 
 export default function Home() {
@@ -14,16 +15,24 @@ export default function Home() {
   useEffect(() => {
     const fetchContents = async () => {
       try {
-        const q = query(
-          collection(db, 'contents'), 
-          where('status', '==', 'approved'),
-          limit(4)
-        );
-        const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setContents(data);
+        const result = await executeQuery(queryRef(dataConnect, 'ListApprovedContents'));
+        const data = result.data as { contents: any[] };
+        setContents(data.contents);
       } catch (error) {
-        console.error("Error fetching contents:", error);
+        console.error("Error fetching contents from Data Connect:", error);
+        // Fallback para Firestore se o Data Connect ainda não estiver pronto
+        try {
+          const q = query(
+            collection(db, 'contents'), 
+            where('status', '==', 'approved'),
+            limit(4)
+          );
+          const querySnapshot = await getDocs(q);
+          const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setContents(data);
+        } catch (fsError) {
+          console.error("Firestore fallback failed:", fsError);
+        }
       } finally {
         setLoading(false);
       }
@@ -155,7 +164,7 @@ export default function Home() {
           {
             icon: <CreditCard className="w-8 h-8 text-angola-yellow" />,
             title: "Acesso Imediato",
-            desc: "Desbloqueia o conteúdo e acede diretamente no Google Drive."
+            desc: "Desbloqueia o conteúdo e acede diretamente após a confirmação."
           }
         ].map((feature, i) => (
           <div key={i} className="flex gap-6 items-start">

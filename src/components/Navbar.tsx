@@ -17,7 +17,7 @@ export default function Navbar() {
               <Mail className="w-3 h-3 text-angola-yellow" />
               Email: suport.bukar@gmail.com
             </a>
-            <a href="tel:+244947098616" className="flex items-center gap-2 hover:text-angola-yellow transition-colors">
+            <a href="tel:+244946372562" className="flex items-center gap-2 hover:text-angola-yellow transition-colors">
               <Phone className="w-3 h-3 text-angola-yellow" />
               Tel: +244 947 098 616
             </a>

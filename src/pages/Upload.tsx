@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../firebase';
+import { db, storage, dataConnect } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { executeMutation, mutationRef } from 'firebase/data-connect';
 import { motion } from 'motion/react';
 import { Upload as UploadIcon, FileText, Video, Book, GraduationCap, CheckCircle, Loader2 } from 'lucide-react';
 
 const CATEGORIES = ['Marketing', 'Inteligência Artificial', 'Direito', 'Engenharia', 'Medicina', 'Economia', 'Artes'];
 const TYPES = [
-  { id: 'pdf', label: 'PDF / Documento', icon: FileText },
-  { id: 'video', label: 'Videoaula', icon: Video },
-  { id: 'course', label: 'Curso Completo', icon: Book },
-  { id: 'lesson', label: 'Aula Avulsa', icon: GraduationCap },
-  { id: 'manual', label: 'Manual / Guia', icon: FileText },
-  { id: 'book', label: 'Livro Digital', icon: Book },
+  { id: 'pdf', label: 'PDF / Documento', icon: FileText, disabled: false },
+  { id: 'video', label: 'Videoaula', icon: Video, disabled: true },
+  { id: 'course', label: 'Curso Completo', icon: Book, disabled: true },
+  { id: 'lesson', label: 'Aula Avulsa', icon: GraduationCap, disabled: true },
+  { id: 'manual', label: 'Manual / Guia', icon: FileText, disabled: false },
+  { id: 'book', label: 'Livro Digital', icon: Book, disabled: false },
 ];
 
 export default function Upload() {
@@ -37,46 +39,45 @@ export default function Upload() {
     e.preventDefault();
     if (!user || !file) return;
 
+    // 1. Validações de Tipo e Tamanho
+    const allowedTypes = ['pdf', 'manual', 'book'];
+    const isAllowedType = allowedTypes.includes(formData.type);
+    const isUnderLimit = file.size <= 5 * 1024 * 1024; // 5MB
+
+    if (!isAllowedType) {
+      alert('Este tipo de conteúdo (Vídeos/Cursos) está em desenvolvimento. Por agora, apenas aceitamos documentos.');
+      return;
+    }
+
+    if (!isUnderLimit) {
+      alert('O ficheiro é demasiado grande. O limite para documentos no Firebase é de 5MB. Para ficheiros maiores, use o Google Drive (em breve).');
+      return;
+    }
+
     setLoading(true);
     try {
-      // 1. Get upload session from backend
-      const sessionResponse = await fetch('/api/drive/upload-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          titulo: formData.title,
-          tipo: formData.type, // pdf, video, book, etc
-          isFree: formData.isFree,
-          mimeType: file.type,
-        }),
-      });
+      // 2. Upload para Firebase Storage
+      const storagePath = `uploads/${user.uid}/${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, storagePath);
       
-      const session = await sessionResponse.json();
-      if (session.error) throw new Error(session.error);
+      const uploadResult = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(uploadResult.ref);
 
-      // 2. Upload direct to Google Drive
-      const uploadResponse = await fetch(session.uploadUrl, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${session.accessToken}`,
-          'Content-Type': file.type,
-        },
-        body: file,
-      });
+      // 3. Salvar metadados no Data Connect (PostgreSQL)
+      await executeMutation(mutationRef(dataConnect, 'CreateContent', {
+        title: formData.title,
+        subtitle: formData.subtitle,
+        author: formData.author,
+        type: formData.type,
+        category: formData.category,
+        isFree: formData.isFree,
+        fileUrl: downloadURL,
+        storagePath: storagePath,
+        storageType: 'firebase',
+        userId: user.uid
+      }));
 
-      if (!uploadResponse.ok) throw new Error('Falha no upload para o Drive');
-
-      // 3. Save metadata to Firestore
-      await addDoc(collection(db, 'contents'), {
-        ...formData,
-        userId: user.uid,
-        fileIdPrimary: session.fileId,
-        accountId: session.accountId,
-        status: 'pending',
-        createdAt: serverTimestamp(),
-      });
-
-      setStep(3); // Success step
+      setStep(3); // Sucesso
     } catch (error: any) {
       console.error('Erro no upload:', error);
       alert('Erro ao enviar conteúdo: ' + error.message);
@@ -166,15 +167,25 @@ export default function Upload() {
                       <button
                         key={t.id}
                         type="button"
-                        onClick={() => setFormData({...formData, type: t.id})}
-                        className={`p-3 rounded-xl border-2 flex items-center gap-2 text-xs font-bold transition-all ${
-                          formData.type === t.id 
-                          ? 'border-angola-red bg-angola-red/5 text-angola-red' 
-                          : 'border-transparent bg-slate-50 text-angola-black/60'
+                        disabled={t.disabled}
+                        onClick={() => !t.disabled && setFormData({...formData, type: t.id})}
+                        className={`p-3 rounded-xl border-2 flex flex-col items-start gap-1 text-xs font-bold transition-all relative ${
+                          t.disabled 
+                          ? 'opacity-50 cursor-not-allowed bg-slate-100 border-transparent text-slate-400'
+                          : formData.type === t.id 
+                            ? 'border-angola-red bg-angola-red/5 text-angola-red' 
+                            : 'border-transparent bg-slate-50 text-angola-black/60 hover:bg-slate-100'
                         }`}
                       >
-                        <t.icon className="w-4 h-4" />
-                        {t.label}
+                        <div className="flex items-center gap-2">
+                          <t.icon className="w-4 h-4" />
+                          {t.label}
+                        </div>
+                        {t.disabled && (
+                          <span className="text-[8px] uppercase bg-slate-200 px-2 py-0.5 rounded-full">
+                            Brevemente
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
