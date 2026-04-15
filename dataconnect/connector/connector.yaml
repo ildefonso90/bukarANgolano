@@ -1,4 +1,4 @@
-connectorId: "buki-connector"
+connectorId: "default"
 generate:
   javascriptSdk:
     outputDir: "../../src/generated/dataconnect"

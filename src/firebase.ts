@@ -13,7 +13,7 @@ export const googleProvider = new GoogleAuthProvider();
 
 // Inicialização do Data Connect
 export const dataConnect = getDataConnect(app, {
-  connector: 'buki-connector',
+  connector: 'default',
   service: 'gen-lang-client-0791203222-service',
   location: 'us-east4'
 });
