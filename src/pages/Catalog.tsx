@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db, dataConnect } from '../firebase';
-import { executeQuery, queryRef } from 'firebase/data-connect';
+import { supabase } from '../lib/supabase';
 import ContentCard from '../components/ContentCard';
 import { Search, Filter, Loader2 } from 'lucide-react';
 
@@ -14,20 +12,15 @@ export default function Catalog() {
   useEffect(() => {
     const fetchContents = async () => {
       try {
-        const result = await executeQuery(queryRef(dataConnect, 'ListApprovedContents'));
-        const data = result.data as { contents: any[] };
-        setContents(data.contents);
+        const { data, error } = await supabase
+          .from('contents')
+          .select('*')
+          .eq('status', 'approved');
+        
+        if (error) throw error;
+        setContents(data || []);
       } catch (error) {
-        console.error("Error fetching contents from Data Connect:", error);
-        // Fallback para Firestore
-        try {
-          const q = query(collection(db, 'contents'), where('status', '==', 'approved'));
-          const querySnapshot = await getDocs(q);
-          const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          setContents(data);
-        } catch (fsError) {
-          console.error("Firestore fallback failed:", fsError);
-        }
+        console.error("Error fetching contents from Supabase:", error);
       } finally {
         setLoading(false);
       }
@@ -80,9 +73,15 @@ export default function Catalog() {
       </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <Loader2 className="w-10 h-10 text-angola-red animate-spin" />
-          <p className="text-angola-black/50 font-medium">Carregando biblioteca...</p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+            <div key={i} className="animate-pulse space-y-4">
+              <div className="h-48 bg-slate-100 rounded-3xl" />
+              <div className="h-4 w-24 bg-slate-100 rounded" />
+              <div className="h-6 w-full bg-slate-100 rounded" />
+              <div className="h-12 w-full bg-slate-100 rounded-2xl" />
+            </div>
+          ))}
         </div>
       ) : filteredContents.length > 0 ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">

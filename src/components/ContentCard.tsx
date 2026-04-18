@@ -23,7 +23,7 @@ export default function ContentCard({ content }: any) {
         <Icon className="w-20 h-20 text-angola-black/10 group-hover:text-angola-red/20 transition-colors" />
         
         <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
-          {content.isFree ? (
+          {(content.is_free || content.isFree) ? (
             <span className="bg-green-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
               Grátis
             </span>
@@ -58,7 +58,7 @@ export default function ContentCard({ content }: any) {
           to={`/content/${content.id}`}
           className="w-full flex items-center justify-center gap-2 bg-angola-black text-white py-4 rounded-2xl font-bold hover:bg-angola-red transition-all group shadow-xl shadow-black/10"
         >
-          {content.isFree ? 'Aceder Agora' : 'Desbloquear'}
+          {(content.is_free || content.isFree) ? 'Aceder Agora' : 'Desbloquear'}
           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>

@@ -1,7 +1,0 @@
-specVersion: "v1alpha"
-serviceId: "gen-lang-client-0791203222-service"
-location: "us-east4" # Northern Virginia
-schema:
-  source: "schema"
-connectorDirs:
-  - "connector"

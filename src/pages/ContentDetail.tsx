@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-import { db, dataConnect } from '../firebase';
-import { executeQuery, queryRef } from 'firebase/data-connect';
+import { doc, getDoc } from 'firebase/firestore'; // Note: Keeping for reference if needed but logic is migrated
+import { auth } from '../firebase';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileText, Video, Lock, CheckCircle2, CreditCard, Loader2, ArrowLeft, Download, User as UserIcon, ShieldCheck } from 'lucide-react';
+import { FileText, Video, Lock, CheckCircle2, CreditCard, Loader2, ArrowLeft, Download, User as UserIcon, ShieldCheck, Heart } from 'lucide-react';
 
 export default function ContentDetail() {
   const { id } = useParams();
@@ -15,41 +15,36 @@ export default function ContentDetail() {
   const [loading, setLoading] = useState(true);
   const [checkingAccess, setCheckingAccess] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriting, setFavoriting] = useState(false);
+
+  useEffect(() => {
+    if (profile && content) {
+      setIsFavorited(profile.favorite_ids?.includes(content.id));
+    }
+  }, [profile, content]);
 
   // Check if user has access (free content or purchased bundle)
-  const hasAccess = content?.isFree || profile?.purchasedBundleIds?.includes(content?.bundleId);
+  const hasAccess = content?.is_free || profile?.purchased_bundle_ids?.includes(content?.bundle_id);
 
   useEffect(() => {
     const fetchContent = async () => {
       if (!id) return;
       try {
-        // Tentar Data Connect primeiro
-        const result = await executeQuery(queryRef(dataConnect, 'GetContent', { id }));
-        const data = result.data as { content: any };
-        if (data.content) {
-          setContent(data.content);
+        const { data, error } = await supabase
+          .from('contents')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setContent(data);
         } else {
-          // Fallback para Firestore
-          const docRef = doc(db, 'contents', id);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            setContent({ id: docSnap.id, ...docSnap.data() });
-          } else {
-            navigate('/catalog');
-          }
+          navigate('/catalog');
         }
       } catch (error) {
-        console.error("Error fetching content:", error);
-        // Fallback imediato para Firestore em caso de erro no Data Connect
-        try {
-          const docRef = doc(db, 'contents', id);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            setContent({ id: docSnap.id, ...docSnap.data() });
-          }
-        } catch (fsError) {
-          console.error("Firestore fallback failed:", fsError);
-        }
+        console.error("Error fetching content from Supabase:", error);
       } finally {
         setLoading(false);
       }
@@ -63,6 +58,38 @@ export default function ContentDetail() {
       return;
     }
     setShowPaymentModal(true);
+  };
+
+  const toggleFavorite = async () => {
+    if (!user || !profile || !content) {
+      if (!user) navigate('/login');
+      return;
+    }
+
+    setFavoriting(true);
+    try {
+      const currentFavs = profile.favorite_ids || [];
+      let newFavs;
+      
+      if (isFavorited) {
+        newFavs = currentFavs.filter((id: string) => id !== content.id);
+      } else {
+        newFavs = [...currentFavs, content.id];
+      }
+
+      const { error } = await supabase
+        .from('users')
+        .update({ favorite_ids: newFavs })
+        .eq('uid', user.uid);
+
+      if (error) throw error;
+      
+      setIsFavorited(!isFavorited);
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    } finally {
+      setFavoriting(false);
+    }
   };
 
   const processPayment = async () => {
@@ -112,9 +139,27 @@ export default function ContentDetail() {
                 {content.type}
               </span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-angola-black leading-tight">
-              {content.title}
-            </h1>
+            <div className="flex items-center justify-between gap-4">
+              <h1 className="text-4xl md:text-5xl font-black text-angola-black leading-tight">
+                {content.title}
+              </h1>
+              <button
+                onClick={toggleFavorite}
+                disabled={favoriting}
+                className={`p-4 rounded-2xl border transition-all ${
+                  isFavorited 
+                    ? 'bg-angola-red border-angola-red text-white shadow-xl shadow-red-900/20' 
+                    : 'bg-white border-angola-black/5 text-angola-black/20 hover:text-angola-red hover:border-angola-red/20'
+                }`}
+                title={isFavorited ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}
+              >
+                {favoriting ? (
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                ) : (
+                  <Heart className={`w-6 h-6 ${isFavorited ? 'fill-current' : ''}`} />
+                )}
+              </button>
+            </div>
             <p className="text-xl text-angola-black/60 font-medium">{content.subtitle}</p>
             
             <div className="flex items-center gap-6 text-angola-black/40 font-bold text-sm">
@@ -123,7 +168,7 @@ export default function ContentDetail() {
                 {content.author}
               </span>
               <span>•</span>
-              <span>{content.createdAt ? new Date(content.createdAt.seconds * 1000).toLocaleDateString('pt-AO') : 'Recente'}</span>
+              <span>{content.created_at ? new Date(content.created_at).toLocaleDateString('pt-AO') : 'Recente'}</span>
             </div>
           </div>
 
@@ -132,10 +177,10 @@ export default function ContentDetail() {
             <div className="bg-white p-2 rounded-[2.5rem] shadow-2xl border border-angola-black/5 overflow-hidden">
               <div className="aspect-video bg-slate-50 rounded-[2rem] overflow-hidden relative group">
                 {hasAccess ? (
-                  content.storageType === 'firebase' ? (
-                    content.type === 'pdf' || content.type === 'manual' || content.type === 'book' ? (
+                  (content.storage_type === 'supabase' || content.storageType === 'firebase') ? (
+                    (content.type === 'pdf' || content.type === 'manual' || content.type === 'book') ? (
                       <iframe 
-                        src={content.fileUrl} 
+                        src={content.file_url || content.fileUrl} 
                         className="w-full h-full border-none"
                         title="Content Viewer"
                       />
@@ -143,14 +188,14 @@ export default function ContentDetail() {
                       <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center space-y-4">
                         <FileText className="w-16 h-16 text-angola-red" />
                         <h3 className="text-xl font-bold">Ficheiro Pronto</h3>
-                        <a href={content.fileUrl} target="_blank" rel="noopener noreferrer" className="bg-angola-black text-white px-8 py-3 rounded-xl font-bold">
+                        <a href={content.file_url || content.fileUrl} target="_blank" rel="noopener noreferrer" className="bg-angola-black text-white px-8 py-3 rounded-xl font-bold">
                           Abrir Ficheiro
                         </a>
                       </div>
                     )
                   ) : (
                     <iframe 
-                      src={`https://drive.google.com/file/d/${content.fileIdPrimary}/preview`} 
+                      src={`https://drive.google.com/file/d/${content.file_id_primary || content.fileIdPrimary}/preview`} 
                       className="w-full h-full border-none"
                       title="Content Viewer"
                     />
@@ -224,7 +269,7 @@ export default function ContentDetail() {
             {hasAccess && (
               <div className="space-y-3">
                 <a 
-                  href={content.storageType === 'firebase' ? content.fileUrl : `https://drive.google.com/file/d/${content.fileIdPrimary}/view`}
+                  href={content.storage_type === 'supabase' ? content.file_url : content.fileUrl || `https://drive.google.com/file/d/${content.file_id_primary || content.fileIdPrimary}/view`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full flex items-center justify-center gap-2 bg-angola-black text-white py-5 rounded-2xl font-black hover:bg-angola-red transition-all shadow-xl"
@@ -233,7 +278,7 @@ export default function ContentDetail() {
                   Baixar Ficheiro
                 </a>
                 <p className="text-[10px] text-center text-angola-black/30 font-bold italic">
-                  {content.storageType === 'firebase' ? '* Ficheiro armazenado de forma segura no Firebase.' : '* Se o link falhar, tenta a réplica de segurança.'}
+                  {content.storage_type === 'supabase' ? '* Ficheiro armazenado de forma segura no Supabase.' : '* Link de segurança do Firebase/Drive.'}
                 </p>
               </div>
             )}

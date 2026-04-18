@@ -8,7 +8,6 @@ import { fileURLToPath } from "url";
 
 // Import payment logic - fixing extensions for Node 22 type stripping
 import { paymentRouter } from "./src/pagamentoAo/paymentController.ts";
-import { driveRouter } from "./src/GoogleDriveManuais/driveController.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,9 +25,6 @@ async function startServer() {
 
   // Payment Routes
   app.use("/api/payments", paymentRouter);
-  
-  // Drive Routes
-  app.use("/api/drive", driveRouter);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

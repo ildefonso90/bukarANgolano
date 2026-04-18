@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { auth } from '../firebase';
+import { supabase } from '../lib/supabase';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -17,29 +17,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        const docRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setProfile(docSnap.data());
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      try {
+        setUser(fbUser);
+        if (fbUser) {
+          // Sync with Supabase instead of Firestore
+          const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('uid', fbUser.uid)
+            .single();
+
+          if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+            console.error("Supabase profile error:", error);
+          }
+
+          if (data) {
+            setProfile(data);
+          } else {
+            // Create profile in Supabase if it doesn't exist
+            const newProfile = {
+              uid: fbUser.uid,
+              email: fbUser.email,
+              display_name: fbUser.displayName || 'Estudante Angolano',
+              purchased_bundle_ids: [],
+              favorite_ids: [],
+              role: 'user'
+            };
+            
+            const { data: created, error: createError } = await supabase
+              .from('users')
+              .insert([newProfile])
+              .select()
+              .single();
+
+            if (createError) {
+              console.error("Error creating Supabase profile:", createError);
+            } else {
+              setProfile(created);
+            }
+          }
         } else {
-          // Create profile if it doesn't exist
-          const newProfile = {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName,
-            purchasedTccs: [],
-            role: 'user'
-          };
-          await setDoc(docRef, newProfile);
-          setProfile(newProfile);
+          setProfile(null);
         }
-      } else {
-        setProfile(null);
+      } catch (error: any) {
+        console.error("Auth context error:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();

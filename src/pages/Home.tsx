@@ -1,38 +1,47 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Search, BookOpen, ShieldCheck, CreditCard, ArrowRight, Loader2 } from 'lucide-react';
-import { collection, getDocs, limit, query, where } from 'firebase/firestore';
-import { db, dataConnect } from '../firebase';
-import { executeQuery, queryRef } from 'firebase/data-connect';
+import { supabase } from '../lib/supabase';
 import ContentCard from '../components/ContentCard';
+
+const HERO_IMAGES = [
+  "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=800",
+  "https://images.unsplash.com/photo-1523240715639-99a8cb487747?auto=format&fit=crop&q=80&w=800",
+  "https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&q=80&w=800",
+  "https://images.unsplash.com/photo-1491843331657-20092017e971?auto=format&fit=crop&q=80&w=800",
+  "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=800",
+  "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=800",
+  "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=800",
+  "https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&q=80&w=800"
+];
 
 export default function Home() {
   const [contents, setContents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % HERO_IMAGES.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const fetchContents = async () => {
       try {
-        const result = await executeQuery(queryRef(dataConnect, 'ListApprovedContents'));
-        const data = result.data as { contents: any[] };
-        setContents(data.contents);
+        const { data, error } = await supabase
+          .from('contents')
+          .select('*')
+          .eq('status', 'approved')
+          .limit(4);
+        
+        if (error) throw error;
+        setContents(data || []);
       } catch (error) {
-        console.error("Error fetching contents from Data Connect:", error);
-        // Fallback para Firestore se o Data Connect ainda não estiver pronto
-        try {
-          const q = query(
-            collection(db, 'contents'), 
-            where('status', '==', 'approved'),
-            limit(4)
-          );
-          const querySnapshot = await getDocs(q);
-          const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          setContents(data);
-        } catch (fsError) {
-          console.error("Firestore fallback failed:", fsError);
-        }
+        console.error("Error fetching contents from Supabase:", error);
       } finally {
         setLoading(false);
       }
@@ -80,20 +89,41 @@ export default function Home() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
-            className="relative hidden lg:block"
+            className="relative hidden lg:block h-[500px]"
           >
-            <div className="relative z-10 rounded-[2rem] overflow-hidden shadow-2xl border-8 border-white">
-              <img 
-                src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=800" 
-                alt="Estudante Angolana" 
-                className="w-full h-[500px] object-cover"
-                referrerPolicy="no-referrer"
-              />
+            <div className="relative z-10 rounded-[2rem] overflow-hidden shadow-2xl border-8 border-white h-full w-full">
+              <AnimatePresence mode="wait">
+                <motion.img 
+                  key={currentSlide}
+                  src={HERO_IMAGES[currentSlide]} 
+                  alt={`Estudante Angolana ${currentSlide + 1}`} 
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.5 }}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              </AnimatePresence>
+              
+              {/* Slider indicators */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                {HERO_IMAGES.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentSlide(i)}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      currentSlide === i ? 'bg-white w-6' : 'bg-white/40'
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
+            
             {/* Decorative elements */}
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-angola-yellow/20 rounded-full blur-3xl -z-10" />
             <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-angola-red/10 rounded-full blur-3xl -z-10" />
-            <div className="absolute top-1/2 -right-4 w-12 h-12 border-4 border-indigo-500 rounded-full animate-bounce" />
+            <div className="absolute top-1/2 -right-4 w-12 h-12 border-4 border-indigo-500 rounded-full animate-bounce z-20" />
           </motion.div>
         </div>
       </section>
@@ -131,9 +161,15 @@ export default function Home() {
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <Loader2 className="w-10 h-10 text-angola-red animate-spin" />
-            <p className="text-slate-500 font-medium">Carregando catálogo...</p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="animate-pulse space-y-4">
+                <div className="h-48 bg-slate-100 rounded-3xl" />
+                <div className="h-4 w-24 bg-slate-100 rounded" />
+                <div className="h-6 w-full bg-slate-100 rounded" />
+                <div className="h-12 w-full bg-slate-100 rounded-2xl" />
+              </div>
+            ))}
           </div>
         ) : contents.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">

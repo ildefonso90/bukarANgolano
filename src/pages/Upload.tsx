@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { db, storage, dataConnect } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { executeMutation, mutationRef } from 'firebase/data-connect';
+import { supabase } from '../lib/supabase';
 import { motion } from 'motion/react';
 import { Upload as UploadIcon, FileText, Video, Book, GraduationCap, CheckCircle, Loader2 } from 'lucide-react';
 
@@ -42,7 +39,9 @@ export default function Upload() {
     // 1. Validações de Tipo e Tamanho
     const allowedTypes = ['pdf', 'manual', 'book'];
     const isAllowedType = allowedTypes.includes(formData.type);
-    const isUnderLimit = file.size <= 5 * 1024 * 1024; // 5MB
+    
+    // Supabase permite ficheiros maiores, mas vamos manter um limite razoável (20MB)
+    const isUnderLimit = file.size <= 20 * 1024 * 1024; 
 
     if (!isAllowedType) {
       alert('Este tipo de conteúdo (Vídeos/Cursos) está em desenvolvimento. Por agora, apenas aceitamos documentos.');
@@ -50,36 +49,48 @@ export default function Upload() {
     }
 
     if (!isUnderLimit) {
-      alert('O ficheiro é demasiado grande. O limite para documentos no Firebase é de 5MB. Para ficheiros maiores, use o Google Drive (em breve).');
+      alert('O ficheiro é demasiado grande. O limite para documentos no plano gratuito é de 20MB.');
       return;
     }
 
     setLoading(true);
     try {
-      // 2. Upload para Firebase Storage
-      const storagePath = `uploads/${user.uid}/${Date.now()}_${file.name}`;
-      const storageRef = ref(storage, storagePath);
+      // 2. Upload para Supabase Storage
+      const storagePath = `${user.uid}/${Date.now()}_${file.name}`;
       
-      const uploadResult = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(uploadResult.ref);
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('uploads')
+        .upload(storagePath, file);
 
-      // 3. Salvar metadados no Data Connect (PostgreSQL)
-      await executeMutation(mutationRef(dataConnect, 'CreateContent', {
-        title: formData.title,
-        subtitle: formData.subtitle,
-        author: formData.author,
-        type: formData.type,
-        category: formData.category,
-        isFree: formData.isFree,
-        fileUrl: downloadURL,
-        storagePath: storagePath,
-        storageType: 'firebase',
-        userId: user.uid
-      }));
+      if (uploadError) throw uploadError;
+
+      // 3. Obter URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('uploads')
+        .getPublicUrl(storagePath);
+
+      // 4. Salvar metadados no Supabase
+      const { error: dbError } = await supabase
+        .from('contents')
+        .insert([{
+          title: formData.title,
+          subtitle: formData.subtitle,
+          author: formData.author,
+          type: formData.type,
+          category: formData.category,
+          is_free: formData.isFree,
+          file_url: publicUrl,
+          storage_path: storagePath,
+          storage_type: 'supabase',
+          user_id: user.uid,
+          status: 'approved',
+        }]);
+
+      if (dbError) throw dbError;
 
       setStep(3); // Sucesso
     } catch (error: any) {
-      console.error('Erro no upload:', error);
+      console.error('Erro no upload Supabase:', error);
       alert('Erro ao enviar conteúdo: ' + error.message);
     } finally {
       setLoading(false);
