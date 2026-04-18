@@ -5,7 +5,7 @@ import { auth } from '../firebase';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileText, Video, Lock, CheckCircle2, CreditCard, Loader2, ArrowLeft, Download, User as UserIcon, ShieldCheck, Heart } from 'lucide-react';
+import { FileText, Video, Lock, CheckCircle2, CreditCard, Loader2, ArrowLeft, Download, User as UserIcon, ShieldCheck, Heart, Eye } from 'lucide-react';
 
 export default function ContentDetail() {
   const { id } = useParams();
@@ -17,6 +17,7 @@ export default function ContentDetail() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoriting, setFavoriting] = useState(false);
+  const [isReading, setIsReading] = useState(false);
 
   useEffect(() => {
     if (profile && content) {
@@ -128,25 +129,25 @@ export default function ContentDetail() {
         Voltar à Biblioteca
       </button>
 
-      <div className="grid lg:grid-cols-3 gap-12">
-        <div className="lg:col-span-2 space-y-8">
-          <div className="space-y-4">
+      <div className="grid lg:grid-cols-3 gap-8 md:gap-12">
+        <div className="lg:col-span-2 space-y-6 md:space-y-8">
+          <div className="space-y-4 md:space-y-6">
             <div className="flex items-center gap-3">
-              <span className="bg-angola-red text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+              <span className="bg-angola-red text-white px-3 py-1 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest">
                 {content.category}
               </span>
-              <span className="bg-angola-yellow text-angola-black px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-angola-black/10">
+              <span className="bg-angola-yellow text-angola-black px-3 py-1 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest border border-angola-black/10">
                 {content.type}
               </span>
             </div>
-            <div className="flex items-center justify-between gap-4">
-              <h1 className="text-4xl md:text-5xl font-black text-angola-black leading-tight">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-angola-black leading-tight">
                 {content.title}
               </h1>
               <button
                 onClick={toggleFavorite}
                 disabled={favoriting}
-                className={`p-4 rounded-2xl border transition-all ${
+                className={`p-3 md:p-4 rounded-2xl border transition-all self-start sm:self-center shrink-0 ${
                   isFavorited 
                     ? 'bg-angola-red border-angola-red text-white shadow-xl shadow-red-900/20' 
                     : 'bg-white border-angola-black/5 text-angola-black/20 hover:text-angola-red hover:border-angola-red/20'
@@ -154,29 +155,30 @@ export default function ContentDetail() {
                 title={isFavorited ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}
               >
                 {favoriting ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin" />
                 ) : (
-                  <Heart className={`w-6 h-6 ${isFavorited ? 'fill-current' : ''}`} />
+                  <Heart className={`w-5 h-5 md:w-6 md:h-6 ${isFavorited ? 'fill-current' : ''}`} />
                 )}
               </button>
             </div>
-            <p className="text-xl text-angola-black/60 font-medium">{content.subtitle}</p>
+            <p className="text-lg md:text-xl text-angola-black/60 font-medium">{content.subtitle}</p>
             
-            <div className="flex items-center gap-6 text-angola-black/40 font-bold text-sm">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-angola-black/40 font-bold text-xs md:text-sm">
               <span className="flex items-center gap-2">
                 <UserIcon className="w-4 h-4" />
                 {content.author}
               </span>
-              <span>•</span>
+              <span className="hidden sm:inline">•</span>
               <span>{content.created_at ? new Date(content.created_at).toLocaleDateString('pt-AO') : 'Recente'}</span>
             </div>
           </div>
 
           {/* Viewer Section */}
           <div className="space-y-6">
-            <div className="bg-white p-2 rounded-[2.5rem] shadow-2xl border border-angola-black/5 overflow-hidden">
-              <div className="aspect-video bg-slate-50 rounded-[2rem] overflow-hidden relative group">
-                {hasAccess ? (
+            <div className="bg-white p-1.5 md:p-2 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl border border-angola-black/5 overflow-hidden">
+              <div className="aspect-[3/4] sm:aspect-video bg-slate-100 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden relative group">
+                {isReading && hasAccess ? (
+                  // Document Viewer Mode
                   (content.storage_type === 'supabase' || content.storageType === 'firebase') ? (
                     (content.type === 'pdf' || content.type === 'manual' || content.type === 'book') ? (
                       <iframe 
@@ -185,10 +187,10 @@ export default function ContentDetail() {
                         title="Content Viewer"
                       />
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center space-y-4">
-                        <FileText className="w-16 h-16 text-angola-red" />
-                        <h3 className="text-xl font-bold">Ficheiro Pronto</h3>
-                        <a href={content.file_url || content.fileUrl} target="_blank" rel="noopener noreferrer" className="bg-angola-black text-white px-8 py-3 rounded-xl font-bold">
+                      <div className="w-full h-full flex flex-col items-center justify-center p-6 md:p-12 text-center space-y-4">
+                        <FileText className="w-12 h-12 md:w-16 md:h-16 text-angola-red" />
+                        <h3 className="text-lg md:text-xl font-bold">Ficheiro Pronto</h3>
+                        <a href={content.file_url || content.fileUrl} target="_blank" rel="noopener noreferrer" className="bg-angola-black text-white px-6 md:px-8 py-3 rounded-xl font-bold">
                           Abrir Ficheiro
                         </a>
                       </div>
@@ -201,26 +203,64 @@ export default function ContentDetail() {
                     />
                   )
                 ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center space-y-6">
-                    <div className="bg-slate-100 p-8 rounded-full">
-                      <Lock className="w-16 h-16 text-angola-black/20" />
+                  // Cover Image Mode (Default or Locked)
+                  <div className="relative w-full h-full">
+                    {content.thumbnail_url ? (
+                      <img 
+                        src={content.thumbnail_url} 
+                        alt="Capa do Trabalho" 
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <FileText className="w-20 h-20 text-angola-black/5" />
+                      </div>
+                    )}
+
+                    {/* Overlay Actions */}
+                    <div className="absolute inset-0 bg-angola-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-center p-8 space-y-6">
+                      {hasAccess ? (
+                        <>
+                          <div className="bg-white/20 p-6 rounded-full rotate-3 mb-2">
+                            <Eye className="w-12 h-12 text-angola-yellow" />
+                          </div>
+                          <div className="space-y-2">
+                            <h3 className="text-2xl font-black text-white">Pronto para Ler</h3>
+                            <p className="text-white/60 font-medium">Clica no botão abaixo para abrir o documento completo.</p>
+                          </div>
+                          <button 
+                            onClick={() => setIsReading(true)}
+                            className="bg-angola-yellow text-angola-black px-12 py-4 rounded-2xl font-black text-lg hover:scale-105 transition-all shadow-xl shadow-yellow-900/20"
+                          >
+                            Ler Agora
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="bg-white/10 p-6 rounded-full">
+                            <Lock className="w-12 h-12 text-white/50" />
+                          </div>
+                          <div className="space-y-2">
+                            <h3 className="text-2xl font-black text-white">Conteúdo Bloqueado</h3>
+                            <p className="text-white/60 font-medium max-w-xs">Adquire este pacote para desbloquear o acesso completo a este material.</p>
+                          </div>
+                          <button 
+                            onClick={handleUnlock}
+                            className="bg-angola-red text-white px-12 py-4 rounded-2xl font-black text-lg hover:scale-105 transition-all shadow-xl shadow-red-900/20"
+                          >
+                            Desbloquear - 2.000 Kz
+                          </button>
+                        </>
+                      )}
                     </div>
-                    <div className="space-y-2">
-                      <h3 className="text-2xl font-black text-angola-black">Conteúdo Bloqueado</h3>
-                      <p className="text-angola-black/40 max-w-sm mx-auto">Este material faz parte de um pacote premium. Desbloqueia para ter acesso completo.</p>
-                    </div>
-                    <button 
-                      onClick={handleUnlock}
-                      className="bg-angola-red text-white px-12 py-4 rounded-2xl font-bold shadow-xl shadow-red-900/20 hover:scale-105 transition-all"
-                    >
-                      Desbloquear Pacote - 2.000 Kz
-                    </button>
                   </div>
                 )}
               </div>
             </div>
           </div>
         </div>
+
 
         {/* Sidebar */}
         <div className="space-y-6">
@@ -268,11 +308,20 @@ export default function ContentDetail() {
 
             {hasAccess && (
               <div className="space-y-3">
+                <button 
+                  onClick={() => setIsReading(!isReading)}
+                  className={`w-full flex items-center justify-center gap-2 py-5 rounded-2xl font-black transition-all shadow-xl ${
+                    isReading ? 'bg-angola-red text-white' : 'bg-angola-yellow text-angola-black'
+                  }`}
+                >
+                  <Eye className="w-5 h-5" />
+                  {isReading ? 'Fechar Leitor' : 'Ler Agora'}
+                </button>
                 <a 
                   href={content.storage_type === 'supabase' ? content.file_url : content.fileUrl || `https://drive.google.com/file/d/${content.file_id_primary || content.fileIdPrimary}/view`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 bg-angola-black text-white py-5 rounded-2xl font-black hover:bg-angola-red transition-all shadow-xl"
+                  className="w-full flex items-center justify-center gap-2 bg-angola-black text-white py-5 rounded-2xl font-black hover:bg-slate-800 transition-all shadow-xl"
                 >
                   <Download className="w-5 h-5" />
                   Baixar Ficheiro

@@ -70,56 +70,59 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-12 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-6">
-          <div className="w-20 h-20 bg-angola-red rounded-[2rem] flex items-center justify-center text-white text-3xl font-black shadow-xl shadow-red-900/20 rotate-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
+        <div className="flex flex-col sm:flex-row items-center gap-4 md:gap-6 text-center sm:text-left">
+          <div className="w-16 h-16 md:w-20 md:h-20 bg-angola-red rounded-[1.5rem] md:rounded-[2rem] flex items-center justify-center text-white text-2xl md:text-3xl font-black shadow-xl shadow-red-900/20 rotate-3 shrink-0">
             {profile?.display_name?.charAt(0) || user?.email?.charAt(0)}
           </div>
           <div>
-            <h1 className="text-4xl font-black text-angola-black">Olá, {profile?.display_name || 'Estudante'}</h1>
-            <p className="text-angola-black/40 font-bold">Bem-vindo à tua biblioteca pessoal do BukiAngolano.</p>
+            <h1 className="text-3xl md:text-4xl font-black text-angola-black">Olá, {profile?.display_name || 'Estudante'}</h1>
+            <p className="text-angola-black/40 font-bold text-sm md:text-base">Bem-vindo à tua biblioteca pessoal do BukiAngolano.</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 bg-angola-yellow/20 px-6 py-3 rounded-2xl border border-angola-yellow/30">
+        <div className="flex items-center justify-center sm:justify-start gap-3 bg-angola-yellow/20 px-6 py-3 rounded-2xl border border-angola-yellow/30 self-center md:self-auto">
           <ShieldCheck className="w-5 h-5 text-angola-black" />
-          <span className="text-angola-black font-black uppercase text-xs tracking-widest">Conta Verificada</span>
+          <span className="text-angola-black font-black uppercase text-[10px] md:text-xs tracking-widest">Conta Verificada</span>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
         <div className="lg:col-span-2 space-y-10">
           {/* Tabs Navigation */}
-          <div className="flex flex-wrap items-center gap-4 bg-slate-50 p-2 rounded-3xl border border-angola-black/5">
+          <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 md:gap-4 bg-slate-50 p-2 rounded-2xl md:rounded-3xl border border-angola-black/5">
             <button
               onClick={() => setActiveTab('purchased')}
-              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-black transition-all ${
-                activeTab === 'purchased' ? 'bg-angola-black text-white shadow-xl' : 'text-angola-black/40 hover:text-angola-black'
+              className={`flex-1 flex items-center justify-center gap-2 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl font-black transition-all text-xs md:text-base ${
+                activeTab === 'purchased' ? 'bg-angola-black text-white shadow-xl px-6' : 'text-angola-black/40 hover:text-angola-black'
               }`}
             >
-              <Package className="w-5 h-5" />
-              <span>Comprados</span>
-              <span className="ml-2 text-[10px] bg-white/20 px-2 py-0.5 rounded-full">{purchasedContents.length}</span>
+              <Package className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="hidden sm:inline">Comprados</span>
+              <span className="sm:hidden">Premium</span>
+              <span className="ml-1 md:ml-2 text-[9px] md:text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">{purchasedContents.length}</span>
             </button>
             <button
               onClick={() => setActiveTab('uploads')}
-              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-black transition-all ${
-                activeTab === 'uploads' ? 'bg-angola-red text-white shadow-xl' : 'text-angola-black/40 hover:text-angola-red'
+              className={`flex-1 flex items-center justify-center gap-2 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl font-black transition-all text-xs md:text-base ${
+                activeTab === 'uploads' ? 'bg-angola-red text-white shadow-xl px-6' : 'text-angola-black/40 hover:text-angola-red'
               }`}
             >
-              <UploadIcon className="w-5 h-5" />
-              <span>Meus Envios</span>
-              <span className="ml-2 text-[10px] bg-white/20 px-2 py-0.5 rounded-full">{myUploads.length}</span>
+              <UploadIcon className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="hidden sm:inline">Meus Envios</span>
+              <span className="sm:hidden">Envios</span>
+              <span className="ml-1 md:ml-2 text-[9px] md:text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">{myUploads.length}</span>
             </button>
             <button
               onClick={() => setActiveTab('favorites')}
-              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-black transition-all ${
-                activeTab === 'favorites' ? 'bg-angola-yellow text-angola-black shadow-xl' : 'text-angola-black/40 hover:text-angola-yellow'
+              className={`flex-1 flex items-center justify-center gap-2 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl font-black transition-all text-xs md:text-base ${
+                activeTab === 'favorites' ? 'bg-angola-yellow text-angola-black shadow-xl px-6' : 'text-angola-black/40 hover:text-angola-yellow'
               }`}
             >
-              <Heart className="w-5 h-5" />
-              <span>Favoritos</span>
-              <span className="ml-2 text-[10px] bg-black/10 px-2 py-0.5 rounded-full">{favoriteContents.length}</span>
+              <Heart className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="hidden sm:inline">Favoritos</span>
+              <span className="sm:hidden">Favs</span>
+              <span className="ml-1 md:ml-2 text-[9px] md:text-[10px] bg-black/10 px-1.5 py-0.5 rounded-full">{favoriteContents.length}</span>
             </button>
           </div>
 

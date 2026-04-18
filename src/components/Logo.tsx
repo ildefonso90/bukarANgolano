@@ -1,5 +1,5 @@
 import { motion, useAnimation } from 'motion/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Logo() {
   const controls = useAnimation();
@@ -8,26 +8,39 @@ export default function Logo() {
   const brand = "uki";
   const suffix = "Angolano";
   
-  const handleClick = async () => {
+  const triggerJump = async () => {
     if (isAnimating) return;
     setIsAnimating(true);
     
-    // Animate the "B"
+    // Animate all letters sequentially
     await controls.start((i) => ({
-      y: [0, -15, 0],
+      y: [0, -12, 0],
       transition: { 
         delay: i * 0.05, 
-        duration: 0.4,
-        ease: "easeOut"
+        duration: 0.5,
+        ease: "easeInOut"
       }
     }));
     
     setIsAnimating(false);
   };
 
+  useEffect(() => {
+    // Initial jump after a short delay to get attention
+    const initialDelay = setTimeout(triggerJump, 1000);
+    
+    // Set interval for jumping every 15 seconds so they don't forget the name
+    const interval = setInterval(triggerJump, 15000);
+    
+    return () => {
+      clearTimeout(initialDelay);
+      clearInterval(interval);
+    };
+  }, []);
+
   return (
     <div 
-      onClick={handleClick} 
+      onClick={triggerJump} 
       className="flex items-center cursor-pointer select-none group"
     >
       {/* Tilted B like the image */}

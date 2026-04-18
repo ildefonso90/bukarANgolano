@@ -239,10 +239,11 @@ export default function Login() {
                 </button>
                 <button 
                   onClick={() => setMethod('phone')}
-                  className="flex flex-col items-center justify-center gap-2 p-4 border-2 border-slate-100 rounded-2xl hover:border-slate-300 transition-all font-bold text-slate-600 text-sm"
+                  className="flex flex-col items-center justify-center gap-2 p-4 border-2 border-slate-100 rounded-2xl hover:border-slate-300 transition-all font-bold text-slate-600 text-sm relative"
                 >
                   <Smartphone className="w-5 h-5" />
                   Telemóvel
+                  <span className="text-[8px] text-red-500 font-medium absolute -bottom-5">pode não funcionar</span>
                 </button>
               </div>
             </div>

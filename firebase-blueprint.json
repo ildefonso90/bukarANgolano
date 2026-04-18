@@ -23,16 +23,17 @@
         "type": { "type": "string", "enum": ["pdf", "video", "course", "lesson", "manual", "book"] },
         "author": { "type": "string" },
         "category": { "type": "string" },
-        "isFree": { "type": "boolean" },
-        "bundleId": { "type": "string", "description": "If paid, which bundle it belongs to" },
-        "fileIdPrimary": { "type": "string" },
-        "fileIdBackup": { "type": "string" },
-        "previewId": { "type": "string" },
-        "userId": { "type": "string", "description": "Uploader ID" },
+        "is_free": { "type": "boolean" },
+        "bundle_id": { "type": "string", "description": "If paid, which bundle it belongs to" },
+        "file_url": { "type": "string" },
+        "thumbnail_url": { "type": "string", "description": "URL for the cover image" },
+        "storage_path": { "type": "string" },
+        "storage_type": { "type": "string" },
+        "user_id": { "type": "string", "description": "Uploader ID" },
         "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "created_at": { "type": "string", "format": "date-time" }
       },
-      "required": ["title", "type", "category", "isFree", "userId", "status"]
+      "required": ["title", "type", "category", "is_free", "user_id", "status"]
     },
     "Bundle": {
       "title": "Bundle",

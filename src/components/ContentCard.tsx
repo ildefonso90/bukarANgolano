@@ -20,7 +20,16 @@ export default function ContentCard({ content }: any) {
       className="bg-white rounded-3xl border border-angola-black/5 overflow-hidden shadow-sm hover:shadow-2xl transition-all"
     >
       <div className="h-48 bg-slate-50 flex items-center justify-center relative overflow-hidden group">
-        <Icon className="w-20 h-20 text-angola-black/10 group-hover:text-angola-red/20 transition-colors" />
+        {content.thumbnail_url ? (
+          <img 
+            src={content.thumbnail_url} 
+            alt={content.title}
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          />
+        ) : (
+          <Icon className="w-20 h-20 text-angola-black/10 group-hover:text-angola-red/20 transition-colors" />
+        )}
         
         <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
           {(content.is_free || content.isFree) ? (
