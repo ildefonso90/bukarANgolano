@@ -7,20 +7,41 @@ interface AuthContextType {
   user: FirebaseUser | null;
   profile: any | null;
   loading: boolean;
+  isAdmin: boolean;
+  isAdminAuthenticated: boolean;
+  verifyAdminPassword: (password: string) => boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, profile: null, loading: true });
+const AuthContext = createContext<AuthContextType>({ 
+  user: null, 
+  profile: null, 
+  loading: true, 
+  isAdmin: false,
+  isAdminAuthenticated: false,
+  verifyAdminPassword: () => false
+});
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
+    return sessionStorage.getItem('admin_auth') === 'true';
+  });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       try {
         setUser(fbUser);
         if (fbUser) {
+          // Check admin status with password parsing
+          // Format expected: email1=pass1,email2=pass2 OR just email1,email2
+          const rawAdmins = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',');
+          const adminEmails = rawAdmins.map((entry: string) => entry.split('=')[0].trim().toLowerCase());
+          
+          setIsAdmin(adminEmails.includes(fbUser.email?.toLowerCase() || ''));
+
           // Sync with Supabase instead of Firestore
           const { data, error } = await supabase
             .from('users')
@@ -70,8 +91,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
+  const verifyAdminPassword = (password: string): boolean => {
+    if (!user?.email) return false;
+    
+    const rawAdmins = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',');
+    const adminEntry = rawAdmins.find((entry: string) => 
+      entry.split('=')[0].trim().toLowerCase() === user.email?.toLowerCase()
+    );
+
+    if (adminEntry) {
+      const parts = adminEntry.split('=');
+      // If there's no password set in env, we allow access if the email matches
+      // but if a password is set (email=pass), we verify it
+      if (parts.length > 1) {
+        const correctPassword = parts[1].trim();
+        if (password === correctPassword) {
+          setIsAdminAuthenticated(true);
+          sessionStorage.setItem('admin_auth', 'true');
+          return true;
+        }
+      } else {
+        // No password required for this admin if not specified in VITE_ADMIN_EMAILS
+        setIsAdminAuthenticated(true);
+        sessionStorage.setItem('admin_auth', 'true');
+        return true;
+      }
+    }
+    return false;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading }}>
+    <AuthContext.Provider value={{ user, profile, loading, isAdmin, isAdminAuthenticated, verifyAdminPassword }}>
       {children}
     </AuthContext.Provider>
   );

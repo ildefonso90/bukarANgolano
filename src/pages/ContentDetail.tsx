@@ -5,7 +5,7 @@ import { auth } from '../firebase';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileText, Video, Lock, CheckCircle2, CreditCard, Loader2, ArrowLeft, Download, User as UserIcon, ShieldCheck, Heart, Eye } from 'lucide-react';
+import { FileText, Video, Lock, CheckCircle2, CreditCard, Loader2, ArrowLeft, Download, User as UserIcon, ShieldCheck, Heart, Eye, Mail, History } from 'lucide-react';
 
 export default function ContentDetail() {
   const { id } = useParams();
@@ -32,17 +32,25 @@ export default function ContentDetail() {
     const fetchContent = async () => {
       if (!id) return;
       try {
+        // Fetch content and join with users table to get uploader details
         const { data, error } = await supabase
           .from('contents')
-          .select('*')
+          .select('*, profiles:users!contents_user_id_fkey(display_name, email)')
           .eq('id', id)
           .single();
 
-        if (error) throw error;
-        if (data) {
-          setContent(data);
+        if (error) {
+          // Fallback if join fails (might happen if foreign keys aren't set up yet)
+          const { data: simpleData, error: simpleError } = await supabase
+            .from('contents')
+            .select('*')
+            .eq('id', id)
+            .single();
+          
+          if (simpleError) throw simpleError;
+          setContent(simpleData);
         } else {
-          navigate('/catalog');
+          setContent(data);
         }
       } catch (error) {
         console.error("Error fetching content from Supabase:", error);
@@ -163,13 +171,36 @@ export default function ContentDetail() {
             </div>
             <p className="text-lg md:text-xl text-angola-black/60 font-medium">{content.subtitle}</p>
             
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-angola-black/40 font-bold text-xs md:text-sm">
-              <span className="flex items-center gap-2">
-                <UserIcon className="w-4 h-4" />
-                {content.author}
-              </span>
-              <span className="hidden sm:inline">•</span>
-              <span>{content.created_at ? new Date(content.created_at).toLocaleDateString('pt-AO') : 'Recente'}</span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 pt-6 text-angola-black/50 font-medium text-xs md:text-sm border-t border-angola-black/5">
+              <div className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 rounded-2xl border border-angola-black/5">
+                <div className="bg-angola-red/10 p-2 rounded-xl">
+                  <UserIcon className="w-4 h-4 text-angola-red" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-black text-angola-black/30 leading-none mb-1">Partilhado por</span>
+                  <span className="font-black text-angola-black">{content.profiles?.display_name || content.author}</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 rounded-2xl border border-angola-black/5">
+                <div className="bg-angola-red/10 p-2 rounded-xl">
+                  <Mail className="w-4 h-4 text-angola-red" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-black text-angola-black/30 leading-none mb-1">E-mail</span>
+                  <span className="font-black text-angola-black">{content.profiles?.email || 'estudante@bukiangolano.com'}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 rounded-2xl border border-angola-black/5">
+                <div className="bg-angola-red/10 p-2 rounded-xl">
+                  <History className="w-4 h-4 text-angola-red" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-black text-angola-black/30 leading-none mb-1">Publicado em</span>
+                  <span className="font-black text-angola-black">{content.created_at ? new Date(content.created_at).toLocaleDateString('pt-AO') : 'Recentemente'}</span>
+                </div>
+              </div>
             </div>
           </div>
 

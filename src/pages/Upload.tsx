@@ -125,6 +125,7 @@ export default function Upload() {
           file_url: publicUrl,
           thumbnail_url: thumbnailUrl,
           storage_path: storagePath,
+          thumbnail_path: coverPath,
           storage_type: 'supabase',
           user_id: user.uid,
           status: 'approved',
@@ -262,14 +263,11 @@ export default function Upload() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setFormData({...formData, isFree: false})}
-                      className={`flex-1 p-3 md:p-4 rounded-xl md:rounded-2xl border-2 font-bold transition-all text-sm md:text-base ${
-                        !formData.isFree 
-                        ? 'border-angola-red bg-white text-angola-red shadow-lg' 
-                        : 'border-transparent bg-white/50 text-angola-black/40'
-                      }`}
+                      disabled
+                      className="flex-1 p-3 md:p-4 rounded-xl md:rounded-2xl border-2 border-transparent bg-slate-100 text-angola-black/20 font-bold transition-all text-sm md:text-base cursor-not-allowed flex flex-col items-center justify-center gap-1"
                     >
                       Conteúdo Pago (2000 Kz)
+                      <span className="text-[8px] uppercase bg-slate-200 px-2 py-0.5 rounded-full text-slate-400">Brevemente</span>
                     </button>
                   </div>
                   <p className="mt-4 text-[10px] md:text-xs text-angola-black/60 italic text-center sm:text-left">

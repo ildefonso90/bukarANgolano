@@ -6,7 +6,7 @@ import { User, LogOut, LayoutDashboard, Mail, Phone, Grid, ChevronDown, Search, 
 import Logo from './Logo';
 
 export default function Navbar() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -29,6 +29,9 @@ export default function Navbar() {
             {user ? (
               <div className="flex items-center gap-4">
                 <span className="text-angola-yellow">Olá, {user.displayName?.split(' ')[0] || user.email?.split('@')[0]}</span>
+                {isAdmin && (
+                  <Link to="/admin" className="bg-white/20 px-3 py-1 rounded-lg hover:bg-white/30 transition-colors border border-white/20">Admin</Link>
+                )}
                 <Link to="/dashboard" className="bg-angola-red px-3 py-1 rounded-lg hover:bg-red-700 transition-colors shadow-lg shadow-red-900/20">Painel</Link>
               </div>
             ) : (
@@ -114,6 +117,16 @@ export default function Navbar() {
               )}
               
               <div className="grid grid-cols-1 gap-1">
+                {isAdmin && (
+                  <Link 
+                    to="/admin"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="px-4 py-3 bg-red-50 text-angola-red font-black rounded-xl transition-all flex items-center justify-between border border-red-100"
+                  >
+                    Painel Administrativo
+                    <ChevronDown className="w-4 h-4 -rotate-90" />
+                  </Link>
+                )}
                 {[
                   { name: 'Início', path: '/' },
                   { name: 'Biblioteca Digital', path: '/catalog' },
