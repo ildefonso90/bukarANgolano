@@ -14,6 +14,7 @@ import ContentManagement from './Adminide/ContentManagement';
 import UserManagement from './Adminide/UserManagement';
 import AdminSettings from './Adminide/AdminSettings';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 function AppContent() {
   const { loading } = useAuth();
@@ -68,6 +69,7 @@ export default function App() {
   return (
     <AuthProvider>
       <AppContent />
+      <SpeedInsights />
     </AuthProvider>
   );
 }
