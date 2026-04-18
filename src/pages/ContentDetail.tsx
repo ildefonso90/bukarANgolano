@@ -5,7 +5,7 @@ import { auth } from '../firebase';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileText, Video, Lock, CheckCircle2, CreditCard, Loader2, ArrowLeft, Download, User as UserIcon, ShieldCheck, Heart, Eye, Mail, History } from 'lucide-react';
+import { FileText, Video, Lock, CheckCircle2, CreditCard, Loader2, ArrowLeft, Download, User as UserIcon, ShieldCheck, Heart, Eye, Mail, History, X } from 'lucide-react';
 
 export default function ContentDetail() {
   const { id } = useParams();
@@ -18,6 +18,29 @@ export default function ContentDetail() {
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoriting, setFavoriting] = useState(false);
   const [isReading, setIsReading] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showSupportPopup, setShowSupportPopup] = useState(false);
+
+  useEffect(() => {
+    let interval: any;
+    if (isFullscreen) {
+      // First show after 30 seconds, then every 2 minutes
+      const firstTimeout = setTimeout(() => {
+        setShowSupportPopup(true);
+        setTimeout(() => setShowSupportPopup(false), 15000);
+      }, 30000);
+
+      interval = setInterval(() => {
+        setShowSupportPopup(true);
+        setTimeout(() => setShowSupportPopup(false), 15000);
+      }, 120000);
+
+      return () => {
+        clearTimeout(firstTimeout);
+        clearInterval(interval);
+      };
+    }
+  }, [isFullscreen]);
 
   useEffect(() => {
     if (profile && content) {
@@ -261,7 +284,10 @@ export default function ContentDetail() {
                             <p className="text-white/60 font-medium">Clica no botão abaixo para abrir o documento completo.</p>
                           </div>
                           <button 
-                            onClick={() => setIsReading(true)}
+                            onClick={() => {
+                              setIsReading(true);
+                              setIsFullscreen(true);
+                            }}
                             className="bg-angola-yellow text-angola-black px-12 py-4 rounded-2xl font-black text-lg hover:scale-105 transition-all shadow-xl shadow-yellow-900/20"
                           >
                             Ler Agora
@@ -340,13 +366,11 @@ export default function ContentDetail() {
             {hasAccess && (
               <div className="space-y-3">
                 <button 
-                  onClick={() => setIsReading(!isReading)}
-                  className={`w-full flex items-center justify-center gap-2 py-5 rounded-2xl font-black transition-all shadow-xl ${
-                    isReading ? 'bg-angola-red text-white' : 'bg-angola-yellow text-angola-black'
-                  }`}
+                  onClick={() => setIsFullscreen(true)}
+                  className={`w-full flex items-center justify-center gap-2 py-5 rounded-2xl font-black transition-all shadow-xl bg-angola-yellow text-angola-black`}
                 >
                   <Eye className="w-5 h-5" />
-                  {isReading ? 'Fechar Leitor' : 'Ler Agora'}
+                  Ler Agora
                 </button>
                 <a 
                   href={content.storage_type === 'supabase' ? content.file_url : content.fileUrl || `https://drive.google.com/file/d/${content.file_id_primary || content.fileIdPrimary}/view`}
@@ -425,6 +449,99 @@ export default function ContentDetail() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Fullscreen Reader */}
+      <AnimatePresence>
+        {isFullscreen && hasAccess && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-angola-black flex flex-col"
+          >
+            {/* Header */}
+            <div className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
+              <div className="flex items-center gap-4">
+                <div className="bg-angola-red/10 p-2 rounded-xl">
+                  <FileText className="w-5 h-5 text-angola-red" />
+                </div>
+                <div>
+                  <h3 className="font-black text-angola-black leading-none truncate max-w-[200px] sm:max-w-md">{content.title}</h3>
+                  <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mt-1">{content.author}</p>
+                </div>
+              </div>
+              
+              <button 
+                onClick={() => setIsFullscreen(false)}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-500 p-2 rounded-xl transition-colors flex items-center gap-2 font-bold text-sm px-4"
+              >
+                <X className="w-5 h-5" />
+                <span className="hidden sm:inline">Fechar</span>
+              </button>
+            </div>
+
+            {/* Support Popup Overlay */}
+            <AnimatePresence>
+              {showSupportPopup && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 50, scale: 0.9 }}
+                  className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[210] w-full max-w-lg px-6"
+                >
+                  <div className="relative bg-white rounded-[2.5rem] shadow-2xl border border-angola-black/5 p-8 flex items-center gap-6">
+                    <div className="bg-angola-yellow/20 p-5 rounded-3xl shrink-0 rotate-3">
+                      <Heart className="w-8 h-8 text-angola-red fill-current" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-angola-black font-bold text-sm leading-relaxed">
+                        Apoie o projecto que passe de vez em quando
+                      </p>
+                      <div className="bg-slate-50 p-3 rounded-xl border border-dashed border-slate-200">
+                        <p className="text-[10px] uppercase font-black text-slate-400 mb-1">IBAN de Joaquim Ildefonso</p>
+                        <p className="font-black text-angola-black text-xs select-all">0040.0000.7161.8726.1028.3</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setShowSupportPopup(false)}
+                      className="absolute top-4 right-4 text-slate-300 hover:text-slate-500 transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Reader Content */}
+            <div className="flex-1 overflow-hidden bg-slate-100">
+              {(content.storage_type === 'supabase' || content.storageType === 'firebase') ? (
+                (content.type === 'pdf' || content.type === 'manual' || content.type === 'book') ? (
+                  <iframe 
+                    src={content.file_url || content.fileUrl} 
+                    className="w-full h-full border-none"
+                    title="Content Viewer Fullscreen"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center space-y-4">
+                    <FileText className="w-24 h-24 text-angola-red" />
+                    <h3 className="text-2xl font-black">Ficheiro Pronto</h3>
+                    <a href={content.file_url || content.fileUrl} target="_blank" rel="noopener noreferrer" className="bg-angola-black text-white px-10 py-5 rounded-2xl font-black text-lg">
+                      Abrir Ficheiro Externamente
+                    </a>
+                  </div>
+                )
+              ) : (
+                <iframe 
+                  src={`https://drive.google.com/file/d/${content.file_id_primary || content.fileIdPrimary}/preview`} 
+                  className="w-full h-full border-none"
+                  title="Content Viewer Fullscreen"
+                />
+              )}
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
