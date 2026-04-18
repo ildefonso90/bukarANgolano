@@ -87,8 +87,17 @@ export default function Upload() {
 
     setLoading(true);
     try {
+      const sanitizeFileName = (name: string) => {
+        return name
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '') // Remove accents
+          .replace(/[^\w.-]/g, '_') // Replace non-alphanumeric (except . and -) with _
+          .replace(/_{2,}/g, '_'); // Replace multiple underscores with one
+      };
+
       // 2. Upload da Capa para Supabase Storage
-      const coverPath = `${user.uid}/covers/${Date.now()}_${coverFile.name}`;
+      const sanitizedCoverName = sanitizeFileName(coverFile.name);
+      const coverPath = `${user.uid}/covers/${Date.now()}_${sanitizedCoverName}`;
       const { data: coverUploadData, error: coverError } = await supabase.storage
         .from('uploads')
         .upload(coverPath, coverFile);
@@ -100,7 +109,8 @@ export default function Upload() {
         .getPublicUrl(coverPath);
 
       // 3. Upload do Ficheiro Principal para Supabase Storage
-      const storagePath = `${user.uid}/${Date.now()}_${file.name}`;
+      const sanitizedFileName = sanitizeFileName(file.name);
+      const storagePath = `${user.uid}/${Date.now()}_${sanitizedFileName}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('uploads')
