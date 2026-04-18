@@ -19,7 +19,7 @@ export default function Navbar() {
             </a>
             <a href="tel:+244946372562" className="flex items-center gap-2 hover:text-angola-yellow transition-colors">
               <Phone className="w-3 h-3 text-angola-yellow" />
-              Tel: +244 947 098 616
+              Tel: +244 946 372 562
             </a>
           </div>
           <div className="flex items-center gap-4 mt-2 sm:mt-0">
