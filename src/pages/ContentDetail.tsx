@@ -5,7 +5,8 @@ import { auth } from '../firebase';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileText, Video, Lock, CheckCircle2, CreditCard, Loader2, ArrowLeft, Download, User as UserIcon, ShieldCheck, Heart, Eye, Mail, History, X } from 'lucide-react';
+import Logo from '../components/Logo';
+import { FileText, Video, Lock, CheckCircle2, CreditCard, Loader2, ArrowLeft, Download, User as UserIcon, ShieldCheck, Heart, Eye, Mail, History, X, Sparkles, MessageSquareHeart } from 'lucide-react';
 
 export default function ContentDetail() {
   const { id } = useParams();
@@ -461,54 +462,87 @@ export default function ContentDetail() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[200] bg-angola-black flex flex-col"
           >
-            {/* Header */}
-            <div className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
-              <div className="flex items-center gap-4">
-                <div className="bg-angola-red/10 p-2 rounded-xl">
-                  <FileText className="w-5 h-5 text-angola-red" />
+            {/* Improved Header with Logo */}
+            <div className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 shadow-sm">
+              <div className="flex items-center gap-6">
+                <div className="hidden sm:block scale-90 origin-left">
+                  <Logo />
                 </div>
+                <div className="h-10 w-px bg-slate-100 hidden sm:block"></div>
                 <div>
-                  <h3 className="font-black text-angola-black leading-none truncate max-w-[200px] sm:max-w-md">{content.title}</h3>
-                  <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mt-1">{content.author}</p>
+                  <h3 className="font-black text-angola-black leading-none truncate max-w-[150px] sm:max-w-md text-sm md:text-base">
+                    {content.title}
+                  </h3>
+                  <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mt-1">
+                    Visualização de Leitura • {content.author}
+                  </p>
                 </div>
               </div>
               
-              <button 
-                onClick={() => setIsFullscreen(false)}
-                className="bg-slate-100 hover:bg-slate-200 text-slate-500 p-2 rounded-xl transition-colors flex items-center gap-2 font-bold text-sm px-4"
-              >
-                <X className="w-5 h-5" />
-                <span className="hidden sm:inline">Fechar</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setIsFullscreen(false)}
+                  className="bg-angola-red text-white p-2 rounded-2xl hover:bg-red-700 transition-all flex items-center gap-2 font-black text-xs px-5 shadow-lg shadow-red-900/20"
+                >
+                  <X className="w-4 h-4" />
+                  Sair do Leitor
+                </button>
+              </div>
             </div>
 
-            {/* Support Popup Overlay */}
+            {/* Support Popup Overlay - Beautified */}
             <AnimatePresence>
               {showSupportPopup && (
                 <motion.div 
-                  initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 50, scale: 0.9 }}
-                  className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[210] w-full max-w-lg px-6"
+                  initial={{ opacity: 0, scale: 0.9, y: 100 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 100 }}
+                  className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[210] w-full max-w-xl px-6"
                 >
-                  <div className="relative bg-white rounded-[2.5rem] shadow-2xl border border-angola-black/5 p-8 flex items-center gap-6">
-                    <div className="bg-angola-yellow/20 p-5 rounded-3xl shrink-0 rotate-3">
-                      <Heart className="w-8 h-8 text-angola-red fill-current" />
+                  <div className="relative bg-white rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-angola-black/5 p-10 overflow-hidden">
+                    {/* Background decorative elements */}
+                    <div className="absolute top-0 right-0 p-8 opacity-5">
+                      <Sparkles className="w-24 h-24 text-angola-yellow" />
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-angola-black font-bold text-sm leading-relaxed">
-                        Apoie o projecto que passe de vez em quando
-                      </p>
-                      <div className="bg-slate-50 p-3 rounded-xl border border-dashed border-slate-200">
-                        <p className="text-[10px] uppercase font-black text-slate-400 mb-1">IBAN de Joaquim Ildefonso</p>
-                        <p className="font-black text-angola-black text-xs select-all">0040.0000.7161.8726.1028.3</p>
+                    <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-angola-yellow/10 rounded-full blur-3xl"></div>
+                    
+                    <div className="relative flex flex-col sm:flex-row items-center gap-8 text-center sm:text-left">
+                      <div className="relative shrink-0">
+                        <div className="w-24 h-24 bg-angola-red/10 text-angola-red rounded-[2rem] flex items-center justify-center rotate-6 shadow-xl shadow-red-900/10">
+                          <MessageSquareHeart className="w-12 h-12" />
+                        </div>
+                        <div className="absolute -top-2 -right-2 bg-angola-yellow text-angola-black w-8 h-8 rounded-full flex items-center justify-center font-black text-sm border-4 border-white">
+                          🇦🇴
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 flex-1">
+                        <div className="space-y-1">
+                          <h4 className="text-2xl font-black text-angola-black tracking-tight leading-none">Dar uma força?</h4>
+                          <p className="text-slate-500 font-bold leading-relaxed text-sm">
+                            Kamba! A <span className="text-angola-red">Buki</span> é feita para ajudar todos os estudantes. Se este material te foi útil, ajuda-nos a manter o portal online.
+                          </p>
+                        </div>
+                        
+                        <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100 shadow-inner group">
+                          <p className="text-[10px] uppercase font-black text-slate-400 mb-2 tracking-widest flex items-center gap-2">
+                            <CreditCard className="w-3 h-3" /> IBAN de Joaquim Ildefonso
+                          </p>
+                          <p className="font-black text-angola-black text-sm md:text-base select-all tracking-wider font-mono">
+                            0040.0000.7161.8726.1028.3
+                          </p>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-bold italic tracking-tight">
+                          * Qualquer valor ajuda a cobrir os custos do servidor. Juntos somos mais fortes!
+                        </p>
                       </div>
                     </div>
+                    
                     <button 
                       onClick={() => setShowSupportPopup(false)}
-                      className="absolute top-4 right-4 text-slate-300 hover:text-slate-500 transition-colors"
+                      className="absolute top-6 right-6 p-2 text-slate-300 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all"
                     >
-                      <X className="w-5 h-5" />
+                      <X className="w-6 h-6" />
                     </button>
                   </div>
                 </motion.div>
@@ -516,20 +550,26 @@ export default function ContentDetail() {
             </AnimatePresence>
 
             {/* Reader Content */}
-            <div className="flex-1 overflow-hidden bg-slate-100">
+            <div className="flex-1 overflow-hidden bg-[#1A1A1A] relative">
               {(content.storage_type === 'supabase' || content.storageType === 'firebase') ? (
                 (content.type === 'pdf' || content.type === 'manual' || content.type === 'book') ? (
                   <iframe 
                     src={content.file_url || content.fileUrl} 
-                    className="w-full h-full border-none"
+                    className="w-full h-full border-none shadow-2xl"
                     title="Content Viewer Fullscreen"
                   />
                 ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center space-y-4">
-                    <FileText className="w-24 h-24 text-angola-red" />
-                    <h3 className="text-2xl font-black">Ficheiro Pronto</h3>
-                    <a href={content.file_url || content.fileUrl} target="_blank" rel="noopener noreferrer" className="bg-angola-black text-white px-10 py-5 rounded-2xl font-black text-lg">
-                      Abrir Ficheiro Externamente
+                  <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center space-y-6">
+                    <div className="w-32 h-32 bg-white/5 rounded-[2.5rem] flex items-center justify-center animate-pulse">
+                      <FileText className="w-16 h-16 text-angola-red opacity-50" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-3xl font-black text-white">Documento pronto para consulta</h3>
+                      <p className="text-white/40 font-medium max-w-sm mx-auto">Este tipo de ficheiro requer visualização externa no teu dispositivo.</p>
+                    </div>
+                    <a href={content.file_url || content.fileUrl} target="_blank" rel="noopener noreferrer" className="bg-angola-red text-white px-10 py-5 rounded-2xl font-black text-lg hover:scale-105 transition-all shadow-2xl shadow-red-900/40 flex items-center gap-3">
+                      <Download className="w-6 h-6" />
+                      Baixar Ficheiro
                     </a>
                   </div>
                 )
@@ -540,6 +580,12 @@ export default function ContentDetail() {
                   title="Content Viewer Fullscreen"
                 />
               )}
+              
+              {/* Subtle watermark/branding overlay at bottom in reader */}
+              <div className="absolute bottom-4 right-6 pointer-events-none opacity-20 filter invert font-black text-xs uppercase tracking-widest text-white flex items-center gap-2 select-none">
+                <ShieldCheck className="w-3 h-3" />
+                Protegido por BukiAngolano
+              </div>
             </div>
           </motion.div>
         )}
