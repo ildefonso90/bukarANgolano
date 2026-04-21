@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, BookOpen, ShieldCheck, CreditCard, ArrowRight, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { cacheService } from '../lib/cache';
 import ContentCard from '../components/ContentCard';
 
 const HERO_IMAGES = [
@@ -31,6 +32,14 @@ export default function Home() {
 
   useEffect(() => {
     const fetchContents = async () => {
+      // Try to get from cache first
+      const cached = cacheService.get<any[]>('home_featured');
+      if (cached) {
+        setContents(cached);
+        setLoading(false);
+        return;
+      }
+
       try {
         const { data, error } = await supabase
           .from('contents')
@@ -39,7 +48,11 @@ export default function Home() {
           .limit(4);
         
         if (error) throw error;
-        setContents(data || []);
+        
+        if (data) {
+          setContents(data);
+          cacheService.set('home_featured', data);
+        }
       } catch (error) {
         console.error("Error fetching contents from Supabase:", error);
       } finally {
@@ -109,6 +122,8 @@ export default function Home() {
                   transition={{ duration: 0.5 }}
                   className="absolute inset-0 w-full h-full object-cover"
                   referrerPolicy="no-referrer"
+                  loading={currentSlide === 0 ? "eager" : "lazy"}
+                  {...(currentSlide === 0 ? { fetchPriority: "high" } : {})}
                 />
               </AnimatePresence>
               
@@ -167,7 +182,7 @@ export default function Home() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-8">
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="animate-pulse space-y-4">
                 <div className="h-48 bg-slate-100 rounded-3xl" />
@@ -178,7 +193,7 @@ export default function Home() {
             ))}
           </div>
         ) : contents.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-8">
             {contents.map(content => (
               <ContentCard key={content.id} content={content} />
             ))}

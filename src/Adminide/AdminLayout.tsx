@@ -12,7 +12,10 @@ import {
   Globe,
   Lock,
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  PlusCircle,
+  Sparkles,
+  MessageSquare
 } from 'lucide-react';
 
 export default function AdminLayout() {
@@ -113,7 +116,10 @@ export default function AdminLayout() {
 
   const menuItems = [
     { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+    { name: 'Assistente IA', path: '/admin/assistant', icon: MessageSquare },
     { name: 'Conteúdos', path: '/admin/content', icon: Files },
+    { name: 'Carregar Ficheiro', path: '/admin/upload', icon: PlusCircle },
+    { name: 'IA & Lote', path: '/admin/ia', icon: Sparkles },
     { name: 'Utilizadores', path: '/admin/users', icon: Users },
     { name: 'Definições', path: '/admin/settings', icon: Settings },
   ];

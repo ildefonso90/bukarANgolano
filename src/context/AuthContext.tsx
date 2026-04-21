@@ -38,9 +38,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Check admin status with password parsing
           // Format expected: email1=pass1,email2=pass2 OR just email1,email2
           const rawAdmins = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',');
-          const adminEmails = rawAdmins.map((entry: string) => entry.split('=')[0].trim().toLowerCase());
+          const adminIdentities = rawAdmins.map((entry: string) => entry.split('=')[0].trim().toLowerCase());
           
-          setIsAdmin(adminEmails.includes(fbUser.email?.toLowerCase() || ''));
+          const isEmailAdmin = fbUser.email && adminIdentities.includes(fbUser.email.toLowerCase());
+          const isPhoneAdmin = fbUser.phoneNumber && adminIdentities.includes(fbUser.phoneNumber);
+          
+          setIsAdmin(!!(isEmailAdmin || isPhoneAdmin));
 
           // Sync with Supabase instead of Firestore
           const { data, error } = await supabase
@@ -92,11 +95,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const verifyAdminPassword = (password: string): boolean => {
-    if (!user?.email) return false;
+    const identity = user?.email?.toLowerCase() || user?.phoneNumber;
+    if (!identity) return false;
     
     const rawAdmins = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',');
     const adminEntry = rawAdmins.find((entry: string) => 
-      entry.split('=')[0].trim().toLowerCase() === user.email?.toLowerCase()
+      entry.split('=')[0].trim().toLowerCase() === identity
     );
 
     if (adminEntry) {

@@ -7,10 +7,13 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  ArrowUpRight
+  ArrowUpRight,
+  Plus
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     users: 0,
     contents: 0,
@@ -55,6 +58,19 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900">Painel de Controlo</h1>
+          <p className="text-slate-400 font-bold">Gerencia a atividade global da BukiAngolano</p>
+        </div>
+        <button 
+          onClick={() => navigate('/admin/upload')}
+          className="px-6 py-3 bg-angola-black text-white rounded-2xl font-black shadow-lg shadow-black/10 hover:scale-105 transition-transform flex items-center gap-2"
+        >
+          <Plus className="w-5 h-5" /> Subir Conteúdo
+        </button>
+      </div>
+
       {/* Grid Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {cards.map((card, idx) => (

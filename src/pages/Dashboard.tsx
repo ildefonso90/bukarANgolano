@@ -137,7 +137,7 @@ export default function Dashboard() {
             </div>
 
             {currentItems.length > 0 ? (
-              <div className="grid sm:grid-cols-2 gap-8">
+              <div className="grid grid-cols-2 gap-4 md:gap-8">
                 {currentItems.map((content: any) => (
                   <ContentCard key={content.id} content={content} />
                 ))}

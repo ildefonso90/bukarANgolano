@@ -11,10 +11,13 @@ import {
   Loader2,
   Pencil,
   X,
-  Save
+  Save,
+  Plus
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function ContentManagement() {
+  const navigate = useNavigate();
   const [contents, setContents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -146,6 +149,12 @@ export default function ContentManagement() {
         </div>
         
         <div className="flex gap-2 w-full md:w-auto">
+          <button 
+            onClick={() => navigate('/admin/upload')}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-angola-black text-white rounded-2xl font-black hover:bg-slate-800 transition-colors shadow-lg shadow-black/10"
+          >
+            <Plus className="w-5 h-5" /> Adicionar Novo
+          </button>
           <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-2xl font-bold hover:bg-slate-50 transition-colors">
             <Filter className="w-5 h-5" /> Filtros
           </button>

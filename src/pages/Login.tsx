@@ -49,7 +49,6 @@ export default function Login() {
   const [verificationCode, setVerificationCode] = useState('');
   const [showOtp, setShowOtp] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
 
   useEffect(() => {
@@ -88,29 +87,38 @@ export default function Login() {
     }
   };
 
-  const setupRecaptcha = () => {
-    if (!recaptchaVerifierRef.current && recaptchaContainerRef.current) {
-      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-        size: 'invisible',
-      });
-    }
-  };
-
   const handlePhoneSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Iniciando login via telefone. Domínio atual:", window.location.hostname);
+    if (loading) return;
+    
     setError(null);
     setLoading(true);
+    
     try {
-      setupRecaptcha();
-      const verifier = recaptchaVerifierRef.current;
-      if (!verifier) return;
+      // Clear previous verifier if any, to avoid "already rendered" errors
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
+      }
 
-      const appVerifier = verifier;
-      const result = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+      const container = document.getElementById('recaptcha-container');
+      if (!container) throw new Error("Recaptcha container not found");
+
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, container, {
+        size: 'invisible',
+        callback: () => {
+          // reCAPTCHA solved, proceeding...
+        }
+      });
+
+      const result = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifierRef.current);
       setConfirmationResult(result);
       setShowOtp(true);
     } catch (error: any) {
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
+      }
       handleAuthError(error);
     } finally {
       setLoading(false);
@@ -119,7 +127,8 @@ export default function Login() {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!confirmationResult) return;
+    if (!confirmationResult || loading) return;
+    
     setError(null);
     setLoading(true);
     try {
@@ -239,11 +248,10 @@ export default function Login() {
                 </button>
                 <button 
                   onClick={() => setMethod('phone')}
-                  className="flex flex-col items-center justify-center gap-2 p-4 border-2 border-slate-100 rounded-2xl hover:border-slate-300 transition-all font-bold text-slate-600 text-sm relative"
+                  className="flex flex-col items-center justify-center gap-2 p-4 border-2 border-slate-100 rounded-2xl hover:border-slate-300 transition-all font-bold text-slate-600 text-sm"
                 >
                   <Smartphone className="w-5 h-5" />
                   Telemóvel
-                  <span className="text-[8px] text-red-500 font-medium absolute -bottom-5">pode não funcionar</span>
                 </button>
               </div>
             </div>
@@ -370,14 +378,17 @@ export default function Login() {
                   <button 
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg hover:bg-black transition-all flex items-center justify-center gap-2 shadow-xl"
+                    className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg hover:bg-black transition-all flex items-center justify-center gap-2 shadow-xl disabled:opacity-50"
                   >
                     {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Enviar Código SMS'}
+                    {!loading && <ArrowRight className="w-5 h-5" />}
                   </button>
-                  <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
-                  <p className="text-[10px] text-slate-400 text-center leading-tight">
-                    Se o SMS não chegar, verifique no Console do Firebase if a <b>SMS Region Policy</b> permite envios para Angola ou adicione números de teste.
-                  </p>
+                  <div id="recaptcha-container"></div>
+                  <div className="bg-slate-50 p-4 rounded-xl space-y-2 border border-slate-100">
+                    <p className="text-[10px] text-slate-500 text-center leading-tight">
+                      <b>Nota importante:</b> Certifique-se de que a "SMS Region Policy" no Console do Firebase permite envios para Angola.
+                    </p>
+                  </div>
                 </form>
               ) : (
                 <form onSubmit={handleVerifyOtp} className="space-y-6">
@@ -397,10 +408,21 @@ export default function Login() {
                   <button 
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-xl"
+                    className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-xl disabled:opacity-50"
                   >
                     {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Confirmar e Entrar'}
                   </button>
+                  
+                  <div className="text-center">
+                    <button 
+                      type="button"
+                      onClick={() => setShowOtp(false)}
+                      className="text-xs font-bold text-slate-400 hover:text-angola-red transition-colors"
+                      disabled={loading}
+                    >
+                      Não recebeu o código? Reenviar SMS
+                    </button>
+                  </div>
                 </form>
               )}
             </motion.div>
