@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
-import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import { Loader2 } from 'lucide-react';
@@ -79,10 +78,8 @@ function AppContent() {
 
 export default function App() {
   return (
-    <HelmetProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </HelmetProvider>
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

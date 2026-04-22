@@ -1,6 +1,4 @@
 
-import { Helmet } from 'react-helmet-async';
-
 interface SEOProps {
   title?: string;
   description?: string;
@@ -85,7 +83,7 @@ export default function SEO({
   }
 
   return (
-    <Helmet>
+    <>
       {/* Standard Metadata */}
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
@@ -129,6 +127,6 @@ export default function SEO({
       <script type="application/ld+json">
         {JSON.stringify(jsonLd)}
       </script>
-    </Helmet>
+    </>
   );
 }
