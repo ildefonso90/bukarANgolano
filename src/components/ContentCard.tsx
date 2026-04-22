@@ -5,7 +5,7 @@ import { FileText, Video, Book, GraduationCap, ArrowRight, Lock, Unlock } from '
 const TYPE_ICONS: any = {
   pdf: FileText,
   video: Video,
-  course: Book,
+  course: GraduationCap,
   lesson: GraduationCap,
   manual: FileText,
   book: Book,
@@ -13,6 +13,21 @@ const TYPE_ICONS: any = {
 
 export default function ContentCard({ content }: any) {
   const Icon = TYPE_ICONS[content.type] || FileText;
+
+  // Render clean description from JSON subtitle if needed
+  const displayDescription = (() => {
+    const raw = content.subtitle || content.author;
+    if (!raw) return '';
+    try {
+      if (typeof raw === 'string' && raw.trim().startsWith('{')) {
+        const parsed = JSON.parse(raw);
+        return parsed.description || raw;
+      }
+    } catch {
+      // ignore
+    }
+    return raw;
+  })();
 
   return (
     <motion.div 
@@ -25,6 +40,8 @@ export default function ContentCard({ content }: any) {
             src={content.thumbnail_url} 
             alt={content.title}
             referrerPolicy="no-referrer"
+            width={600}
+            height={800}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
         ) : (
@@ -56,11 +73,11 @@ export default function ContentCard({ content }: any) {
             {content.category}
           </span>
         </div>
-        <h3 className="text-sm md:text-xl font-black text-angola-black mb-1 md:mb-2 line-clamp-2 leading-tight">
+        <h3 className="text-sm md:text-lg font-black text-angola-black mb-1 md:mb-2 line-clamp-2 leading-tight h-10 md:h-14">
           {content.title}
         </h3>
         <p className="text-angola-black/50 text-[10px] md:text-sm mb-3 md:mb-6 line-clamp-1 font-medium">
-          {content.subtitle || content.author}
+          {displayDescription}
         </p>
         
         <Link 

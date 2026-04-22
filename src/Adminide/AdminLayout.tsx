@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   LayoutDashboard, 
   Files, 
@@ -15,7 +15,8 @@ import {
   AlertCircle,
   PlusCircle,
   Sparkles,
-  MessageSquare
+  MessageSquare,
+  Youtube
 } from 'lucide-react';
 
 export default function AdminLayout() {
@@ -120,6 +121,7 @@ export default function AdminLayout() {
     { name: 'Conteúdos', path: '/admin/content', icon: Files },
     { name: 'Carregar Ficheiro', path: '/admin/upload', icon: PlusCircle },
     { name: 'IA & Lote', path: '/admin/ia', icon: Sparkles },
+    { name: 'Gerador de Cursos', path: '/admin/course-builder', icon: Youtube },
     { name: 'Utilizadores', path: '/admin/users', icon: Users },
     { name: 'Definições', path: '/admin/settings', icon: Settings },
   ];
@@ -195,7 +197,7 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        <div className="p-8">
+        <div className={location.pathname === '/admin/assistant' ? 'p-4 h-[calc(100vh-80px)] overflow-hidden' : 'p-8'}>
           <Outlet />
         </div>
       </main>

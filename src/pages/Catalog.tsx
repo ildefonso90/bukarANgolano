@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { cacheService } from '../lib/cache';
 import ContentCard from '../components/ContentCard';
+import SEO from '../components/SEO';
 import { Search, Filter, Loader2, Tag, Book, DollarSign, ArrowUpDown } from 'lucide-react';
 
 export default function Catalog() {
@@ -23,6 +24,10 @@ export default function Catalog() {
   const [selectedType, setSelectedType] = useState('Todos');
   const [selectedPrice, setSelectedPrice] = useState('Todos');
   const [sortBy, setSortBy] = useState('newest');
+  
+  // Pagination
+  const ITEMS_PER_PAGE = 24;
+  const currentPage = parseInt(searchParams.get('page') || '1');
 
   useEffect(() => {
     setSelectedCategory(categoryFromUrl);
@@ -86,8 +91,27 @@ export default function Catalog() {
       return 0;
     });
 
+  const totalPages = Math.ceil(filteredContents.length / ITEMS_PER_PAGE);
+  const paginatedContents = filteredContents.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const getPageUrl = (page: number) => {
+    const params = new URLSearchParams(searchParams);
+    if (page === 1) params.delete('page');
+    else params.set('page', page.toString());
+    return `https://bukiangolano.com/catalog${params.toString() ? '?' + params.toString() : ''}`;
+  };
+
   return (
     <div className="space-y-8 md:space-y-12">
+      <SEO 
+        title={selectedCategory === 'Todas' ? "Biblioteca Digital" : `Biblioteca: ${selectedCategory}`}
+        description={`Encontre os melhores trabalhos de ${selectedCategory} na Buki Angolano. Pesquise manuais e resumos universitários.`}
+        prev={currentPage > 1 ? getPageUrl(currentPage - 1) : undefined}
+        next={currentPage < totalPages ? getPageUrl(currentPage + 1) : undefined}
+      />
       <div className="space-y-6">
         <div className="text-center md:text-left space-y-2">
           <h1 className="text-3xl md:text-4xl font-black text-angola-black">Biblioteca Digital</h1>
@@ -200,10 +224,62 @@ export default function Catalog() {
             Mostrando {filteredContents.length} resultados
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-            {filteredContents.map((content: any) => (
+            {paginatedContents.map((content: any) => (
               <ContentCard key={content.id} content={content} />
             ))}
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 pt-8">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => {
+                  searchParams.set('page', (currentPage - 1).toString());
+                  setSearchParams(searchParams);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="p-3 rounded-xl border border-angola-black/5 bg-white disabled:opacity-20 font-bold hover:bg-slate-50 transition-colors"
+              >
+                Anterior
+              </button>
+              
+              <div className="flex gap-1">
+                {[...Array(totalPages)].map((_, i) => {
+                  const page = i + 1;
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => {
+                        searchParams.set('page', page.toString());
+                        setSearchParams(searchParams);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className={`w-12 h-12 rounded-xl font-black transition-all ${
+                        currentPage === page 
+                          ? 'bg-angola-red text-white shadow-lg shadow-red-900/20' 
+                          : 'bg-white border border-angola-black/5 text-angola-black/40 hover:bg-slate-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => {
+                  searchParams.set('page', (currentPage + 1).toString());
+                  setSearchParams(searchParams);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="p-3 rounded-xl border border-angola-black/5 bg-white disabled:opacity-20 font-bold hover:bg-slate-50 transition-colors"
+              >
+                Próximo
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-center py-32 bg-white rounded-[3rem] border border-dashed border-angola-black/10">

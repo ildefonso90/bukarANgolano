@@ -45,7 +45,7 @@ export default function Home() {
           .from('contents')
           .select('*')
           .eq('status', 'approved')
-          .limit(4);
+          .limit(24);
         
         if (error) throw error;
         
@@ -183,7 +183,7 @@ export default function Home() {
 
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-8">
-            {[1, 2, 3, 4].map(i => (
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(i => (
               <div key={i} className="animate-pulse space-y-4">
                 <div className="h-48 bg-slate-100 rounded-3xl" />
                 <div className="h-4 w-24 bg-slate-100 rounded" />

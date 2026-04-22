@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase';
 import { supabase } from '../lib/supabase';
@@ -21,7 +21,7 @@ const AuthContext = createContext<AuthContextType>({
   verifyAdminPassword: () => false
 });
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);

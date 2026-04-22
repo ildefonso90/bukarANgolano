@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -22,6 +22,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 // Import the worker using Vite's ?url suffix for reliable loading
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import { CATEGORIES } from '../constants';
+import { generateCoverBlob } from '../lib/coverEngine';
 
 // Configure PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -166,20 +167,35 @@ export default function AdminIA() {
         const metadata = await analyzeWithAI(text, currentFile.file.name);
         updateStatus('ai_analyzing', 50, metadata);
 
-        // Step 3: Upload to Storage
+        // Step 3: Generate Cover and Upload to Storage
         updateStatus('uploading', 60);
+        
+        // Generate dynamic cover image
+        const coverBlob = await generateCoverBlob(metadata.title, metadata.category, metadata.author);
+        
         const sanitizeFileName = (name: string) => name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]/g, '_');
-        
         const timestamp = Date.now();
-        const storagePath = `batch_uploads/${user?.uid}/${timestamp}_${sanitizeFileName(currentFile.file.name)}`;
         
+        // Upload Main PDF
+        const storagePath = `batch_uploads/${user?.uid}/${timestamp}_${sanitizeFileName(currentFile.file.name)}`;
         const { error: uploadError } = await supabase.storage
           .from('uploads')
           .upload(storagePath, currentFile.file);
         
         if (uploadError) throw uploadError;
-        
         const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(storagePath);
+
+        // Upload Generated Cover
+        const coverPath = `batch_covers/${user?.uid}/${timestamp}_cover.png`;
+        const { error: coverUploadError } = await supabase.storage
+          .from('uploads')
+          .upload(coverPath, coverBlob);
+        
+        let thumbnailUrl = 'https://images.unsplash.com/photo-1544377193-33dcf4d68fb5?q=80&w=200&auto=format&fit=crop';
+        if (!coverUploadError) {
+          const { data: { publicUrl: coverUrl } } = supabase.storage.from('uploads').getPublicUrl(coverPath);
+          thumbnailUrl = coverUrl;
+        }
 
         // Step 4: Save to Database
         updateStatus('saving', 90);
@@ -193,7 +209,7 @@ export default function AdminIA() {
             category: metadata.category,
             is_free: true,
             file_url: publicUrl,
-            thumbnail_url: 'https://images.unsplash.com/photo-1544377193-33dcf4d68fb5?q=80&w=200&auto=format&fit=crop', // Default placeholder for batch
+            thumbnail_url: thumbnailUrl,
             storage_path: storagePath,
             storage_type: 'supabase',
             user_id: user?.uid,
