@@ -63,33 +63,62 @@ export default function AdminYouTubeCourse() {
     try {
       console.log("🚀 [FRONTEND] Iniciando extração do YouTube:", url);
       
-      // 1. Fetch & Extract HTML via Proxy (Vercel compatible)
-      const isVercel = window.location.hostname.includes('vercel.app') || 
-                      window.location.hostname !== 'localhost';
-      const proxyUrl = isVercel ? '/api/proxy-youtube' : '/api/proxy-youtube';
+      // 1. Try direct access to YouTube first (no proxy)
+      let html = '';
+      let useProxy = false;
       
-      console.log("🌐 [FRONTEND] Using proxy URL:", proxyUrl, "Environment:", isVercel ? 'Vercel' : 'Local');
-      
-      const proxyRes = await fetch(proxyUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
-      });
-
-      console.log("📡 [FRONTEND] Proxy response status:", proxyRes.status);
-      
-      if (!proxyRes.ok) {
-        const errorData = await proxyRes.json().catch(() => ({}));
-        console.log("❌ [FRONTEND] Proxy error:", errorData);
+      try {
+        console.log("🌐 [FRONTEND] Tentando acesso direto ao YouTube (sem proxy)...");
         
-        // Fallback message for Vercel environment
-        if (isVercel) {
-          throw new Error("O proxy do YouTube não está disponível no ambiente de produção. Tente novamente mais tarde ou use uma URL diferente.");
+        const directRes = await fetch(url, {
+          method: 'GET',
+          mode: 'cors',
+          headers: {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'pt-PT,pt;q=0.9,en;q=0.8',
+            'Cache-Control': 'no-cache',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+
+        console.log("📡 [FRONTEND] Direct response status:", directRes.status);
+        
+        if (directRes.ok) {
+          html = await directRes.text();
+          console.log("✅ [FRONTEND] Acesso direto funcionou! HTML tamanho:", html.length);
+        } else {
+          throw new Error(`Direct access failed: ${directRes.status}`);
         }
-        throw new Error(errorData.message || "Falha ao aceder ao YouTube (Proxy)");
+      } catch (directError) {
+        console.log("⚠️ [FRONTEND] Acesso direto falhou, tentando proxy:", directError.message);
+        useProxy = true;
       }
-      const { html } = await proxyRes.json();
-      console.log("✅ [FRONTEND] HTML recebido, tamanho:", html.length);
+      
+      // 2. Fallback to proxy if direct access failed
+      if (useProxy || !html) {
+        console.log("🔄 [FRONTEND] Usando proxy como fallback...");
+        
+        const isVercel = window.location.hostname.includes('vercel.app');
+        const proxyUrl = '/api/proxy-youtube';
+        
+        const proxyRes = await fetch(proxyUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        console.log("📡 [FRONTEND] Proxy response status:", proxyRes.status);
+        
+        if (!proxyRes.ok) {
+          const errorData = await proxyRes.json().catch(() => ({}));
+          console.log("❌ [FRONTEND] Proxy error:", errorData);
+          throw new Error("Não foi possível aceder ao YouTube. Tente novamente mais tarde.");
+        }
+        
+        const proxyData = await proxyRes.json();
+        html = proxyData.html;
+        console.log("✅ [FRONTEND] Proxy funcionou! HTML tamanho:", html.length);
+      }
       
       // OPTIMIZATION: Extract only relevant text parts from HTML before sending to AI
       const titleMatch = html.match(/<title>(.*?)<\/title>/);
