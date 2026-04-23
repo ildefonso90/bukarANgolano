@@ -61,9 +61,6 @@ export default function AdminYouTubeCourse() {
     setProgress(10);
 
     try {
-      const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const fastModel = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-
       // 1. Fetch & Extract HTML via Proxy
       const proxyRes = await fetch('/api/proxy-youtube', {
         method: 'POST',
@@ -82,7 +79,6 @@ export default function AdminYouTubeCourse() {
       const descMatch = html.match(/<meta name="description" content="(.*?)">/);
       
       // Better regex to catch actual video titles in a playlist/video page
-      // Look for titles followed by author name or duration clues to filter out UI buttons
       const videoClues = html.match(/"title":\{"runs":\[\{"text":"(.*?)"\}\]\}/g) || [];
       const junkWords = ["Início", "Explorar", "Shorts", "Subscrições", "Biblioteca", "Histórico", "Os teus vídeos", "Ver mais tarde", "Vídeos de que gostei", "Mix", "YouTube", "Procurar"];
       
@@ -103,14 +99,15 @@ export default function AdminYouTubeCourse() {
       setProgress(40);
 
       // 2. Extract & Structure with Gemini
-      const extractionResponse = await model.generateContent({
+      const extractionResponse = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
         contents: [
           {
             role: 'user',
             parts: [{ text: `Cria um curso completo usando TODOS os vídeos listados aqui:\n\n${metadataContext}` }]
           }
         ],
-        generationConfig: {
+        config: {
           temperature: 0.7,
           responseMimeType: "application/json",
           responseSchema: {
@@ -153,7 +150,7 @@ export default function AdminYouTubeCourse() {
 
       let courseData: CourseStructure;
       try {
-        const text = extractionResponse.response.text();
+        const text = extractionResponse.text;
         courseData = JSON.parse(text || "{}") as CourseStructure;
       } catch (parseError: any) {
         console.error("Erro ao processar JSON da IA:", parseError);
@@ -198,9 +195,12 @@ export default function AdminYouTubeCourse() {
           Responde APENAS com um array JSON contendo os índices (ex: [0, 2]) dos materiais aprovados para este módulo específico. 
           Se nenhum for compatível para este módulo em particular, responde [].`;
 
-          const result = await fastModel.generateContent(prompt);
+          const result = await ai.models.generateContent({
+            model: "gemini-3-flash-preview",
+            contents: prompt
+          });
           
-          const responseText = result.response.text() || "";
+          const responseText = result.text || "";
           const indices = JSON.parse(responseText.match(/\[.*\]/s)?.[0] || "[]");
           return indices.map((idx: number) => candidates[idx]).filter(Boolean);
         } catch (e) {
