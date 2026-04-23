@@ -95,34 +95,35 @@ export default function Navbar() {
   return (
     <header className="w-full sticky top-0 z-50">
       {/* Top Bar */}
-      <div className="bg-slate-900 text-white py-2 px-4 sm:px-6 lg:px-8 border-b border-white/5">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center text-[10px] font-bold tracking-widest uppercase gap-2 sm:gap-0">
-          <div className="flex items-center gap-4 sm:gap-6">
+      <div className="bg-slate-900 text-white py-1.5 md:py-2 px-4 sm:px-6 lg:px-8 border-b border-white/5">
+        <div className="max-w-7xl mx-auto flex flex-row justify-between items-center text-[10px] font-bold tracking-widest uppercase">
+          <div className="flex items-center gap-3 sm:gap-6">
             <a href="mailto:suport.bukar@gmail.com" className="flex items-center gap-2 hover:text-angola-yellow transition-colors">
               <Mail className="w-3 h-3 text-angola-yellow" />
-              <span className="hidden xs:inline">Email: suport.bukar@gmail.com</span>
-              <span className="xs:inline sm:hidden">Email</span>
+              <span className="hidden sm:inline">suport.bukar@gmail.com</span>
+              <span className="sm:hidden">Email</span>
             </a>
-            <a href="tel:+244946372562" className="flex items-center gap-2 hover:text-angola-yellow transition-colors">
+            <a href="tel:+244946372562" className="flex items-center gap-2 hover:text-angola-yellow transition-colors shrink-0">
               <Phone className="w-3 h-3 text-angola-yellow" />
-              Tel: +244 946 372 562
+              <span className="hidden sm:inline">+244 946 372 562</span>
+              <span className="sm:hidden">Ligar</span>
             </a>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {user ? (
-              <div className="flex items-center gap-4">
-                <span className="text-angola-yellow">Olá, {user.displayName?.split(' ')[0] || user.email?.split('@')[0]}</span>
+              <div className="flex items-center gap-2 sm:gap-4">
+                <span className="text-angola-yellow hidden xs:inline">{user.displayName?.split(' ')[0] || 'Olá'}</span>
                 {isAdmin && (
-                  <Link to="/admin" className="bg-white/20 px-3 py-1 rounded-lg hover:bg-white/30 transition-colors border border-white/20">Admin</Link>
+                  <Link to="/admin" className="bg-white/10 px-2 py-0.5 rounded text-[9px] hover:bg-white/20 transition-colors border border-white/10">Admin</Link>
                 )}
-                <Link to="/dashboard" className="bg-angola-red px-3 py-1 rounded-lg hover:bg-red-700 transition-colors shadow-lg shadow-red-900/20">Painel</Link>
+                <Link to="/dashboard" className="bg-angola-red px-2 py-0.5 rounded text-[9px] hover:bg-red-700 transition-colors shadow-lg">Painel</Link>
               </div>
             ) : (
               <Link 
                 to="/login" 
-                className="bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-lg border border-white/20 transition-all font-black text-[10px]"
+                className="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-[4px] border border-white/20 transition-all font-black text-[9px]"
               >
-                Acessar / Registar
+                Entrar
               </Link>
             )}
           </div>
@@ -224,8 +225,8 @@ export default function Navbar() {
 
         {/* Mobile Menu Dropdown */}
         {isMenuOpen && (
-          <div className="md:hidden bg-white border-t border-slate-100 shadow-2xl absolute top-full left-0 w-full z-50 overflow-hidden animate-in slide-in-from-top duration-300">
-            <div className="p-6 space-y-4">
+          <div className="md:hidden bg-white border-t border-slate-100 shadow-2xl absolute top-full left-0 w-full z-50 overflow-y-auto max-h-[calc(100vh-110px)] animate-in slide-in-from-top duration-300">
+            <div className="p-6 space-y-4 pb-12">
               {user && (
                 <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl mb-6">
                   <div className="bg-angola-red w-10 h-10 rounded-full flex items-center justify-center text-white font-black">
@@ -269,24 +270,17 @@ export default function Navbar() {
                 {/* Mobile Categories Section */}
                 <div className="pt-4 border-t border-slate-50 mt-2">
                   <p className="px-4 text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Categorias</p>
-                  <div className="grid grid-cols-2 gap-2 px-2">
-                    {CATEGORIES.slice(0, 10).map(category => (
+                  <div className="flex overflow-x-auto pb-4 gap-2 px-4 no-scrollbar">
+                    {CATEGORIES.map(category => (
                       <Link 
                         key={category}
                         to={`/catalog?category=${category}`}
                         onClick={() => setIsMenuOpen(false)}
-                        className="p-3 bg-slate-50 text-[11px] font-bold text-slate-600 rounded-xl hover:text-angola-red transition-colors"
+                        className="whitespace-nowrap p-3 bg-slate-50 text-[11px] font-bold text-slate-600 rounded-xl hover:text-angola-red transition-colors shrink-0"
                       >
                         {category}
                       </Link>
                     ))}
-                    <Link 
-                      to="/catalog"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="p-3 bg-angola-yellow/10 text-[11px] font-black text-angola-black rounded-xl text-center"
-                    >
-                      Ver Todas
-                    </Link>
                   </div>
                 </div>
               </div>

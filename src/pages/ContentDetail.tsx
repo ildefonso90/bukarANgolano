@@ -27,6 +27,21 @@ export default function ContentDetail() {
   const [relatedContent, setRelatedContent] = useState<any[]>([]);
   const [authorContent, setAuthorContent] = useState<any[]>([]);
 
+  // Render clean description from JSON subtitle
+  const displayDescription = (() => {
+    const raw = content?.subtitle || content?.author;
+    if (!raw) return '';
+    try {
+      if (typeof raw === 'string' && raw.trim().startsWith('{')) {
+        const parsed = JSON.parse(raw);
+        return parsed.description || raw;
+      }
+    } catch {
+      // ignore
+    }
+    return raw;
+  })();
+
   useEffect(() => {
     if (isFullscreen) {
       document.body.style.overflow = 'hidden';
@@ -259,68 +274,72 @@ export default function ContentDetail() {
         Voltar à Biblioteca
       </button>
 
-      <div className="grid lg:grid-cols-3 gap-8 md:gap-12">
-        <div className="lg:col-span-2 space-y-6 md:space-y-8">
-          <div className="space-y-4 md:space-y-6">
-            <div className="flex items-center gap-3">
-              <span className="bg-angola-red text-white px-3 py-1 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest">
+      <div className="grid lg:grid-cols-3 gap-6 md:gap-12">
+        <div className="lg:col-span-2 space-y-6 md:space-y-10">
+          <div className="space-y-4 md:space-y-8">
+            <div className="flex items-center gap-2 md:gap-3">
+              <span className="bg-angola-red text-white px-2.5 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest shrink-0">
                 {content.category}
               </span>
-              <span className="bg-angola-yellow text-angola-black px-3 py-1 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest border border-angola-black/10">
+              <span className="bg-angola-yellow text-angola-black px-2.5 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest border border-angola-black/10 shrink-0">
                 {content.type}
               </span>
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-angola-black leading-tight">
-                {content.title}
-              </h1>
-              <button
-                onClick={toggleFavorite}
-                disabled={favoriting}
-                className={`p-3 md:p-4 rounded-2xl border transition-all self-start sm:self-center shrink-0 ${
-                  isFavorited 
-                    ? 'bg-angola-red border-angola-red text-white shadow-xl shadow-red-900/20' 
-                    : 'bg-white border-angola-black/5 text-angola-black/20 hover:text-angola-red hover:border-angola-red/20'
-                }`}
-                title={isFavorited ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}
-              >
-                {favoriting ? (
-                  <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin" />
-                ) : (
-                  <Heart className={`w-5 h-5 md:w-6 md:h-6 ${isFavorited ? 'fill-current' : ''}`} />
-                )}
-              </button>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-start justify-between gap-4">
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-angola-black leading-tight">
+                  {content.title}
+                </h1>
+                <button
+                  onClick={toggleFavorite}
+                  disabled={favoriting}
+                  className={`p-3 md:p-4 rounded-xl md:rounded-2xl border transition-all shrink-0 ${
+                    isFavorited 
+                      ? 'bg-angola-red border-angola-red text-white shadow-xl shadow-red-900/20' 
+                      : 'bg-white border-angola-black/5 text-angola-black/20 hover:text-angola-red hover:border-angola-red/20'
+                  }`}
+                  title={isFavorited ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}
+                >
+                  {favoriting ? (
+                    <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin" />
+                  ) : (
+                    <Heart className={`w-5 h-5 md:w-6 md:h-6 ${isFavorited ? 'fill-current' : ''}`} />
+                  )}
+                </button>
+              </div>
             </div>
-            <p className="text-lg md:text-xl text-angola-black/60 font-medium">{content.subtitle}</p>
+            <p className="text-sm md:text-xl text-angola-black/60 font-medium leading-relaxed">
+              {displayDescription}
+            </p>
             
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 pt-6 text-angola-black/50 font-medium text-xs md:text-sm border-t border-angola-black/5">
-              <div className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 rounded-2xl border border-angola-black/5">
-                <div className="bg-angola-red/10 p-2 rounded-xl">
-                  <UserIcon className="w-4 h-4 text-angola-red" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap items-center gap-3 pt-6 text-angola-black/50 font-medium text-xs md:text-sm border-t border-angola-black/5">
+              <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl md:rounded-2xl border border-angola-black/5">
+                <div className="bg-angola-red/10 p-1.5 md:p-2 rounded-lg md:rounded-xl">
+                  <UserIcon className="w-3.5 h-3.5 md:w-4 md:h-4 text-angola-red" />
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-black text-angola-black/30 leading-none mb-1">Partilhado por</span>
-                  <span className="font-black text-angola-black">{content.profiles?.display_name || content.author}</span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[8px] md:text-[10px] uppercase font-black text-angola-black/30 leading-none mb-1">Partilhado por</span>
+                  <span className="font-black text-angola-black text-xs md:text-sm truncate">{content.profiles?.display_name || content.author}</span>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 rounded-2xl border border-angola-black/5">
-                <div className="bg-angola-red/10 p-2 rounded-xl">
-                  <Mail className="w-4 h-4 text-angola-red" />
+              <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl md:rounded-2xl border border-angola-black/5">
+                <div className="bg-angola-red/10 p-1.5 md:p-2 rounded-lg md:rounded-xl">
+                  <Mail className="w-3.5 h-3.5 md:w-4 md:h-4 text-angola-red" />
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-black text-angola-black/30 leading-none mb-1">E-mail</span>
-                  <span className="font-black text-angola-black">{content.profiles?.email || 'estudante@bukiangolano.com'}</span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[8px] md:text-[10px] uppercase font-black text-angola-black/30 leading-none mb-1">E-mail</span>
+                  <span className="font-black text-angola-black text-xs md:text-sm truncate">{content.profiles?.email || 'estudante@bukiangolano.com'}</span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 rounded-2xl border border-angola-black/5">
-                <div className="bg-angola-red/10 p-2 rounded-xl">
-                  <History className="w-4 h-4 text-angola-red" />
+              <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl md:rounded-2xl border border-angola-black/5">
+                <div className="bg-angola-red/10 p-1.5 md:p-2 rounded-lg md:rounded-xl">
+                  <History className="w-3.5 h-3.5 md:w-4 md:h-4 text-angola-red" />
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-black text-angola-black/30 leading-none mb-1">Publicado em</span>
-                  <span className="font-black text-angola-black">{content.created_at ? new Date(content.created_at).toLocaleDateString('pt-AO') : 'Recentemente'}</span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[8px] md:text-[10px] uppercase font-black text-angola-black/30 leading-none mb-1">Publicado em</span>
+                  <span className="font-black text-angola-black text-xs md:text-sm truncate">{content.created_at ? new Date(content.created_at).toLocaleDateString('pt-AO') : 'Recentemente'}</span>
                 </div>
               </div>
 
@@ -364,33 +383,33 @@ export default function ContentDetail() {
             </div>
             
             {content.type === 'course' && content.metadata?.modules && (
-              <div className="space-y-6 bg-slate-50 p-8 rounded-[2rem] border border-angola-black/5">
+              <div className="space-y-6 bg-slate-50 p-6 md:p-8 rounded-[2rem] border border-angola-black/5">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <h3 className="text-xl font-black text-angola-black tracking-tight flex items-center gap-2">
+                    <h3 className="text-lg md:text-xl font-black text-angola-black tracking-tight flex items-center gap-2 leading-tight">
                        <Video className="w-5 h-5 text-angola-red" />
                        Conteúdo do Curso
                     </h3>
-                    <p className="text-xs font-bold text-angola-black/40 uppercase tracking-widest">Currículo Completo</p>
+                    <p className="text-[10px] font-bold text-angola-black/40 uppercase tracking-widest">Currículo Completo</p>
                   </div>
                 </div>
                 
-                <div className="grid sm:grid-cols-2 gap-6">
+                <div className="grid sm:grid-cols-2 gap-x-8 gap-y-6">
                    {content.metadata.modules.slice(0, 4).map((module: any, idx: number) => (
-                     <div key={idx} className="space-y-2">
-                        <h4 className="text-[10px] font-black text-angola-red uppercase tracking-widest flex items-center gap-2">
-                          <span className="w-4 h-4 bg-angola-red/10 flex items-center justify-center rounded-md">{idx+1}</span>
-                          {module.name}
+                     <div key={idx} className="space-y-3">
+                        <h4 className="text-[10px] font-black text-angola-red uppercase tracking-widest flex items-start gap-2 leading-tight">
+                          <span className="w-5 h-5 bg-angola-red/10 flex items-center justify-center rounded-md shrink-0">{idx+1}</span>
+                          <span className="pt-0.5">{module.name}</span>
                         </h4>
-                        <ul className="space-y-1.5">
+                        <ul className="space-y-2 pl-2">
                           {module.videos?.slice(0, 3).map((v: any, vIdx: number) => (
-                            <li key={vIdx} className="flex items-center gap-2 text-xs font-bold text-angola-black/60 truncate">
-                              <div className="w-1 h-1 bg-angola-black/20 rounded-full" />
-                              {v.title}
+                            <li key={vIdx} className="flex items-start gap-3 text-xs font-bold text-angola-black/60">
+                              <div className="w-1 h-1 bg-angola-black/20 rounded-full mt-1.5 shrink-0" />
+                              <span className="leading-snug">{v.title}</span>
                             </li>
                           ))}
                           {(module.videos?.length || 0) > 3 && (
-                            <li className="text-[10px] font-black text-angola-black/30 italic pl-3">+ {module.videos.length - 3} aulas</li>
+                            <li className="text-[10px] font-black text-angola-black/30 italic pl-4">+ {module.videos.length - 3} aulas</li>
                           )}
                           
                           {/* Enrichment Preview */}
@@ -539,24 +558,24 @@ export default function ContentDetail() {
                     )}
 
                     {/* Overlay Actions */}
-                    <div className="absolute inset-0 bg-angola-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-center p-8 space-y-6">
+                    <div className="absolute inset-0 bg-angola-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 md:p-8 space-y-6">
                       {hasAccess ? (
                         <>
-                          <div className="bg-white/20 p-6 rounded-full rotate-3 mb-2">
+                          <div className="bg-white/20 p-4 md:p-6 rounded-full rotate-3 mb-2 shrink-0">
                             {content.type === 'course' ? (
-                              <Video className="w-12 h-12 text-angola-yellow" />
+                              <Video className="w-8 h-8 md:w-12 md:h-12 text-angola-yellow" />
                             ) : (
-                              <Eye className="w-12 h-12 text-angola-yellow" />
+                              <Eye className="w-8 h-8 md:w-12 md:h-12 text-angola-yellow" />
                             )}
                           </div>
                           <div className="space-y-2">
-                            <h3 className="text-2xl font-black text-white">
+                            <h3 className="text-xl md:text-2xl font-black text-white leading-tight">
                               {content.type === 'course' ? 'Pronto para Assistir' : 'Pronto para Ler'}
                             </h3>
-                            <p className="text-white/60 font-medium">
+                            <p className="text-sm md:text-base text-white/60 font-medium max-w-[200px] md:max-w-xs mx-auto leading-tight">
                               {content.type === 'course' 
                                 ? 'Clica no botão abaixo para carregar as vídeo-aulas.' 
-                                : 'Clica no botão abaixo para abrir o documento completo.'}
+                                : 'Clica no botão abaixo para abrir o documento.'}
                             </p>
                           </div>
                           <button 
@@ -564,7 +583,7 @@ export default function ContentDetail() {
                               setIsReading(true);
                               setIsFullscreen(true);
                             }}
-                            className="bg-angola-yellow text-angola-black px-12 py-4 rounded-2xl font-black text-lg hover:scale-105 transition-all shadow-xl shadow-yellow-900/20"
+                            className="w-[80%] sm:w-auto bg-angola-yellow text-angola-black px-8 md:px-12 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-base md:text-lg hover:scale-105 transition-all shadow-xl shadow-yellow-900/20"
                           >
                             {content.type === 'course' ? 'Assistir Agora' : 'Ler Agora'}
                           </button>
@@ -825,70 +844,66 @@ export default function ContentDetail() {
               </div>
             </div>
 
-            {/* Support Popup Overlay - Beautified */}
+            {/* Support Popup Overlay - Beautified and Mobile Fixed */}
             <AnimatePresence>
               {showSupportPopup && (
                 <motion.div 
-                  initial={{ opacity: 0, scale: 0.9, y: 100 }}
+                  initial={{ opacity: 0, scale: 0.9, y: 50 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, y: 100 }}
-                  className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[210] w-full max-w-xl px-6"
+                  exit={{ opacity: 0, scale: 0.9, y: 50 }}
+                  className="fixed bottom-4 sm:bottom-10 left-4 right-4 sm:left-1/2 sm:-translate-x-1/2 z-[210] w-auto sm:w-full sm:max-w-xl"
                 >
-                  <div className="relative bg-white rounded-[2.5rem] md:rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-angola-black/5 p-6 md:p-10 overflow-hidden">
+                  <div className="relative bg-white rounded-[2rem] md:rounded-[3rem] shadow-[0_20px_60px_rgba(0,0,0,0.4)] border border-angola-black/5 p-6 md:p-10 overflow-hidden text-angola-black">
                     {/* Background decorative elements */}
                     <div className="absolute top-0 right-0 p-8 opacity-5">
-                      <Sparkles className="w-24 h-24 text-angola-yellow" />
+                      <Sparkles className="w-16 h-16 md:w-24 md:h-24 text-angola-yellow" />
                     </div>
-                    <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-angola-yellow/10 rounded-full blur-3xl"></div>
                     
-                    <div className="relative flex flex-col sm:flex-row items-center gap-6 md:gap-8 text-center sm:text-left">
+                    <div className="relative flex flex-col sm:flex-row items-center gap-4 md:gap-8 text-center sm:text-left">
                       <div className="relative shrink-0">
-                        <div className="w-16 h-16 md:w-24 md:h-24 bg-angola-red/10 text-angola-red rounded-2xl md:rounded-[2rem] flex items-center justify-center rotate-6 shadow-xl shadow-red-900/10">
+                        <div className="w-16 h-16 md:w-24 md:h-24 bg-angola-red/10 text-angola-red rounded-[1.5rem] md:rounded-[2rem] flex items-center justify-center rotate-3 shadow-xl shadow-red-900/10">
                           <MessageSquareHeart className="w-8 h-8 md:w-12 md:h-12" />
                         </div>
-                        <div className="absolute -top-2 -right-2 bg-angola-yellow text-angola-black w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-black text-[10px] md:text-sm border-2 md:border-4 border-white">
+                        <div className="absolute -top-1 -right-1 bg-angola-yellow text-angola-black w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-black text-[10px] md:text-sm border-2 md:border-4 border-white">
                           🇦🇴
                         </div>
                       </div>
 
-                      <div className="space-y-4 flex-1 w-full">
+                      <div className="space-y-3 md:space-y-4 flex-1 w-full">
                         <div className="space-y-1">
-                          <h4 className="text-xl md:text-2xl font-black text-angola-black tracking-tight leading-loose">Apoia o Projeto?</h4>
-                          <p className="text-slate-500 font-bold leading-relaxed text-xs md:text-sm">
-                            O <span className="text-angola-red">BukiAngolano</span> foi criada para dar acesso gratuito a conteúdos para estudantes. Para manter o projeto ativo — tecnologia e IA — precisamos de apoio.
+                          <h4 className="text-lg md:text-2xl font-black text-angola-black tracking-tight leading-tight">Apoia o Projeto?</h4>
+                          <p className="text-slate-500 font-bold leading-relaxed text-[10px] md:text-sm">
+                            O <span className="text-angola-red">BukiAngolano</span> dá acesso gratuito a conteúdos. Para manter o projeto ativo (tecnologia e IA), precisamos de apoio.
                           </p>
                         </div>
                         
-                        <div className="bg-slate-50 p-4 md:p-6 rounded-2xl md:rounded-[1.5rem] border border-slate-100 shadow-inner group relative">
-                          <p className="text-[10px] uppercase font-black text-slate-400 mb-2 tracking-widest flex items-center gap-2 justify-center sm:justify-start">
+                        <div className="bg-slate-50 p-3 md:p-6 rounded-xl md:rounded-[1.5rem] border border-slate-100 shadow-inner group relative">
+                          <p className="text-[9px] md:text-[10px] uppercase font-black text-slate-400 mb-2 tracking-widest flex items-center gap-2 justify-center sm:justify-start">
                             <CreditCard className="w-3 h-3" /> Titular: Joaquim Ildefonso
                           </p>
-                          <div className="flex flex-col xs:flex-row items-center justify-between gap-3">
-                            <p className="font-black text-angola-black text-xs md:text-base select-all tracking-wider font-mono break-all text-center sm:text-left">
+                          <div className="flex flex-col gap-3">
+                            <p className="font-black text-angola-black text-xs md:text-base select-all tracking-wider font-mono break-all text-center sm:text-left bg-white/50 p-2 rounded-lg border border-slate-100">
                               0040.0000.7161.8726.1028.3
                             </p>
                             <button 
                               onClick={copyIban}
-                              className={`w-full xs:w-auto shrink-0 p-2 px-4 rounded-xl transition-all flex items-center justify-center gap-2 text-[10px] md:text-xs font-black ${
-                                copyFeedback ? 'bg-green-500 text-white' : 'bg-angola-black text-white hover:bg-angola-red'
+                              className={`w-full p-2.5 rounded-xl transition-all flex items-center justify-center gap-2 text-[10px] md:text-xs font-black shadow-sm ${
+                                copyFeedback ? 'bg-green-500 text-white shadow-green-900/10' : 'bg-angola-black text-white hover:bg-angola-red shadow-black/10'
                               }`}
                             >
-                              {copyFeedback ? <CheckCircle2 className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                              {copyFeedback ? 'Copiado' : 'Copiar'}
+                              {copyFeedback ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                              {copyFeedback ? 'IBAN Copiado com Sucesso' : 'Copiar IBAN (Sem Pontos)'}
                             </button>
                           </div>
                         </div>
-                        <p className="text-[10px] text-slate-400 font-bold italic tracking-tight text-center sm:text-left">
-                          * Qualquer coisa é útil. Juntos somos mais fortes!
-                        </p>
                       </div>
                     </div>
                     
                     <button 
                       onClick={() => setShowSupportPopup(false)}
-                      className="absolute top-6 right-6 p-2 text-slate-300 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all"
+                      className="absolute top-4 right-4 p-2 text-slate-300 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all"
                     >
-                      <X className="w-6 h-6" />
+                      <X className="w-5 h-5 md:w-6 md:h-6" />
                     </button>
                   </div>
                 </motion.div>
@@ -900,8 +915,8 @@ export default function ContentDetail() {
               {content.type === 'course' ? (
                 <div className="w-full h-full flex flex-col md:flex-row bg-[#0A0A0A] overflow-hidden">
                    {/* Main Video Stage */}
-                   <div className="flex-1 flex flex-col min-w-0">
-                      <div className="flex-1 bg-black relative">
+                   <div className="flex-none md:flex-1 flex flex-col min-w-0">
+                      <div className="aspect-video md:flex-1 bg-black relative">
                         {content.metadata?.activeVideo ? (
                           <iframe 
                             src={`https://www.youtube.com/embed/${content.metadata.activeVideo.id}?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3`}
@@ -910,18 +925,18 @@ export default function ContentDetail() {
                             allowFullScreen
                           />
                         ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center space-y-4">
-                            <PlayCircle className="w-16 h-16 text-white/20 animate-pulse" />
-                            <p className="text-white/40 font-bold">Iniciando o curso...</p>
+                          <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center space-y-4">
+                            <PlayCircle className="w-12 h-12 text-white/20 animate-pulse" />
+                            <p className="text-white/40 font-bold text-sm">Aula em carregamento...</p>
                           </div>
                         )}
                       </div>
                       
                       {/* Active Video Title Bar */}
-                      <div className="bg-white/5 p-6 border-t border-white/5 shrink-0 flex items-center justify-between">
-                        <div>
-                          <h4 className="text-white font-black text-lg">{content.metadata?.activeVideo?.title || "Aula em carregamento..."}</h4>
-                          <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-1">Sessão Activa • Buki Academy</p>
+                      <div className="bg-white/5 p-4 md:p-6 border-t border-white/5 shrink-0 flex items-center justify-between">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-white font-black text-sm md:text-lg truncate">{content.metadata?.activeVideo?.title || "Aula em carregamento..."}</h4>
+                          <p className="text-white/40 text-[9px] md:text-xs font-bold uppercase tracking-widest mt-0.5">Sessão Activa • Buki Academy</p>
                         </div>
                         <div className="hidden sm:flex items-center gap-2 bg-emerald-500/10 text-emerald-500 px-4 py-2 rounded-xl text-xs font-black">
                           <CheckCircle2 className="w-4 h-4" /> EM PROGRESSO
@@ -930,15 +945,15 @@ export default function ContentDetail() {
                    </div>
 
                    {/* Sidebar - Course Index */}
-                   <div className="w-full md:w-80 bg-[#141414] border-l border-white/5 flex flex-col shrink-0 overflow-hidden">
-                      <div className="p-6 border-b border-white/5 bg-white/2 flex items-center gap-3 shrink-0">
+                   <div className="w-full md:w-80 flex-1 md:flex-none bg-[#141414] md:border-l border-white/5 flex flex-col shrink-0 min-h-0 overflow-hidden">
+                      <div className="p-4 md:p-6 border-b border-white/5 bg-white/2 flex items-center gap-3 shrink-0">
                         <div className="bg-red-600/10 p-2 rounded-lg">
                           <Video className="w-4 h-4 text-red-500" />
                         </div>
-                        <h4 className="text-white font-black text-sm uppercase tracking-wider">Currículo do Curso</h4>
+                        <h4 className="text-white font-black text-xs md:text-sm uppercase tracking-wider">Currículo do Curso</h4>
                       </div>
 
-                      <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+                      <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar touch-pan-y">
                         {content.metadata?.modules?.map((module: any, mIdx: number) => (
                           <div key={mIdx} className="space-y-3">
                             <div className="flex items-center gap-2 px-2">

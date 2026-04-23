@@ -25,12 +25,18 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
       navigate('/');
     }
   }, [user, isAdmin, loading, navigate]);
+
+  // Close sidebar on navigation (mobile)
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
 
   if (loading) {
     return (
@@ -127,10 +133,34 @@ export default function AdminLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row overflow-x-hidden">
+      {/* Mobile Header */}
+      <div className="md:hidden bg-slate-900 border-b border-white/5 h-16 flex items-center justify-between px-6 sticky top-0 z-[60]">
+        <Link to="/" className="flex items-center gap-2">
+          <ShieldCheck className="w-6 h-6 text-angola-red" />
+          <span className="font-black text-lg text-white">Admin Ide</span>
+        </Link>
+        <button 
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="p-2 bg-white/10 text-white rounded-xl active:scale-90 transition-transform"
+        >
+          {isSidebarOpen ? <PlusCircle className="w-6 h-6 rotate-45 transition-transform" /> : <PlusCircle className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Sidebar Overlay (Mobile) */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] md:hidden transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-slate-900 text-white shrink-0">
-        <div className="p-6">
+      <aside className={`fixed md:sticky top-0 left-0 h-screen w-72 md:w-64 bg-slate-900 text-white shrink-0 z-[80] transition-transform duration-300 transform md:translate-x-0 ${
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <div className="p-6 hidden md:block">
           <Link to="/" className="flex items-center gap-3 group">
             <div className="bg-angola-red p-2 rounded-xl group-hover:rotate-12 transition-transform">
               <ShieldCheck className="w-6 h-6" />
@@ -139,7 +169,7 @@ export default function AdminLayout() {
           </Link>
         </div>
 
-        <nav className="mt-6 px-4 space-y-2">
+        <nav className="mt-6 px-4 space-y-2 overflow-y-auto max-h-[calc(100vh-250px)] custom-scrollbar">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
@@ -149,13 +179,13 @@ export default function AdminLayout() {
                 to={item.path}
                 className={`flex items-center justify-between px-4 py-3 rounded-xl font-bold transition-all ${
                   isActive 
-                  ? 'bg-angola-red text-white' 
+                  ? 'bg-angola-red text-white shadow-lg shadow-red-900/40' 
                   : 'text-slate-400 hover:bg-white/5 hover:text-white'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon className="w-5 h-5" />
-                  {item.name}
+                  <span className="text-sm">{item.name}</span>
                 </div>
                 {isActive && <ChevronRight className="w-4 h-4" />}
               </Link>
@@ -163,41 +193,47 @@ export default function AdminLayout() {
           })}
         </nav>
 
-        <div className="mt-auto p-6 absolute bottom-0 w-64 hidden md:block">
-          <div className="bg-white/5 p-4 rounded-2xl space-y-3">
+        <div className="mt-auto p-4 md:p-6 space-y-2">
+          {user && (
+            <button 
+              onClick={() => logout()}
+              className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-xl font-bold transition-all"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="text-sm">Sair da Conta</span>
+            </button>
+          )}
+          
+          <div className="hidden md:block bg-white/5 p-4 rounded-2xl space-y-3">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest">
               <Globe className="w-3 h-3" />
-              Estado do Sistema
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-bold text-slate-300">Online</span>
+              Sistema Online
             </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        <header className="bg-white border-b border-slate-200 h-20 flex items-center justify-between px-8">
-          <div className="flex items-center gap-2 text-slate-400 font-bold">
-            <span className="text-slate-900 capitalize">
-              {menuItems.find(i => i.path === location.pathname)?.name || 'Admin'}
+      <main className="flex-1 min-w-0 bg-slate-50">
+        <header className="bg-white border-b border-slate-200 h-16 md:h-20 flex items-center justify-between px-4 md:px-8 relative md:relative z-50">
+          <div className="flex items-center gap-2 text-slate-400 font-bold overflow-hidden">
+            <span className="text-slate-900 capitalize text-sm md:text-base truncate">
+              {menuItems.find(i => i.path === location.pathname)?.name || 'Painel'}
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 md:gap-4 shrink-0">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-black text-slate-900">{user?.displayName || 'Administrador'}</p>
+              <p className="text-sm font-black text-slate-900 leading-tight">{user?.displayName?.split(' ')[0] || 'Admin'}</p>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{user?.email}</p>
             </div>
-            <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 border border-slate-200">
-              <Users className="w-5 h-5" />
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-slate-100 rounded-lg md:rounded-xl flex items-center justify-center text-slate-400 border border-slate-200">
+              <Users className="w-4 h-4 md:w-5 md:h-5" />
             </div>
           </div>
         </header>
 
-        <div className={location.pathname === '/admin/assistant' ? 'p-4 h-[calc(100vh-80px)] overflow-hidden' : 'p-8'}>
+        <div className={location.pathname === '/admin/assistant' ? 'p-2 md:p-4 h-[calc(100vh-64px)] md:h-[calc(100vh-80px)] overflow-hidden' : 'p-4 md:p-8'}>
           <Outlet />
         </div>
       </main>

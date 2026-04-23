@@ -39,16 +39,27 @@ async function startServer() {
       const { url } = req.body;
       if (!url) return res.status(400).json({ message: "URL é obrigatória" });
       
+      console.log(`[YouTube Proxy] Acedendo a: ${url}`);
+      
       const ytRes = await fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7'
+        },
+        redirect: 'follow'
       });
       
-      if (!ytRes.ok) throw new Error("Não foi possível aceder ao YouTube.");
+      if (!ytRes.ok) {
+        const errorText = await ytRes.text().catch(() => "Sem detalhes");
+        console.error(`[YouTube Proxy] Erro ${ytRes.status}: ${errorText.substring(0, 100)}`);
+        throw new Error(`YouTube respondeu com erro ${ytRes.status}`);
+      }
+      
       const html = await ytRes.text();
       res.json({ html });
     } catch (error: any) {
+      console.error(`[YouTube Proxy] Erro fatal:`, error.message);
       res.status(500).json({ message: error.message });
     }
   });
