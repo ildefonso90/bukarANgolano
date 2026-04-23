@@ -61,18 +61,35 @@ export default function AdminYouTubeCourse() {
     setProgress(10);
 
     try {
-      // 1. Fetch & Extract HTML via Proxy
-      const proxyRes = await fetch('/api/proxy-youtube', {
+      console.log("🚀 [FRONTEND] Iniciando extração do YouTube:", url);
+      
+      // 1. Fetch & Extract HTML via Proxy (Vercel compatible)
+      const isVercel = window.location.hostname.includes('vercel.app') || 
+                      window.location.hostname !== 'localhost';
+      const proxyUrl = isVercel ? '/api/proxy-youtube' : '/api/proxy-youtube';
+      
+      console.log("🌐 [FRONTEND] Using proxy URL:", proxyUrl, "Environment:", isVercel ? 'Vercel' : 'Local');
+      
+      const proxyRes = await fetch(proxyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url })
       });
 
+      console.log("📡 [FRONTEND] Proxy response status:", proxyRes.status);
+      
       if (!proxyRes.ok) {
         const errorData = await proxyRes.json().catch(() => ({}));
+        console.log("❌ [FRONTEND] Proxy error:", errorData);
+        
+        // Fallback message for Vercel environment
+        if (isVercel) {
+          throw new Error("O proxy do YouTube não está disponível no ambiente de produção. Tente novamente mais tarde ou use uma URL diferente.");
+        }
         throw new Error(errorData.message || "Falha ao aceder ao YouTube (Proxy)");
       }
       const { html } = await proxyRes.json();
+      console.log("✅ [FRONTEND] HTML recebido, tamanho:", html.length);
       
       // OPTIMIZATION: Extract only relevant text parts from HTML before sending to AI
       const titleMatch = html.match(/<title>(.*?)<\/title>/);
@@ -82,11 +99,15 @@ export default function AdminYouTubeCourse() {
       const videoClues = html.match(/"title":\{"runs":\[\{"text":"(.*?)"\}\]\}/g) || [];
       const junkWords = ["Início", "Explorar", "Shorts", "Subscrições", "Biblioteca", "Histórico", "Os teus vídeos", "Ver mais tarde", "Vídeos de que gostei", "Mix", "YouTube", "Procurar"];
       
+      console.log("🔍 [FRONTEND] Video clues encontrados:", videoClues.length);
+      
       const cleanVideoList = videoClues
         .map((c: string) => c.replace(/"title":\{"runs":\[\{"text":"(.*?)"\}\]\}/, '$1'))
         .filter(t => t.length > 5 && !junkWords.includes(t)) // Filter short or UI text
         .filter((v, i, a) => a.indexOf(v) === i) // Remove duplicates
         .slice(0, 50);
+
+      console.log("📋 [FRONTEND] Vídeos limpos:", cleanVideoList.length, cleanVideoList.slice(0, 5));
 
       const metadataContext = `
         TITULO PRINCIPAL: ${titleMatch ? titleMatch[1] : 'Desconhecido'}
@@ -95,10 +116,13 @@ export default function AdminYouTubeCourse() {
         ${cleanVideoList.join('\n')}
       `;
 
+      console.log("📝 [FRONTEND] Contexto preparado, tamanho:", metadataContext.length);
+
       setStatus('structuring');
       setProgress(40);
 
       // 2. Extract & Structure with Gemini
+      console.log("🤖 [FRONTEND] Iniciando chamada à Gemini...");
       const extractionResponse = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: [

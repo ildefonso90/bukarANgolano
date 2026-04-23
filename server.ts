@@ -36,11 +36,14 @@ async function startServer() {
   // YouTube Proxy for Frontend Extraction
   app.post("/api/proxy-youtube", async (req, res) => {
     try {
+      console.log(" [PROXY] Request received:", req.body);
       const { url } = req.body;
-      if (!url) return res.status(400).json({ message: "URL é obrigatória" });
+      if (!url) {
+        console.log(" [PROXY] No URL provided");
+        return res.status(400).json({ message: "URL é obrigatória" });
+      }
       
-      console.log(`[YouTube Proxy] Acedendo a: ${url}`);
-      
+      console.log(" [PROXY] Fetching YouTube URL:", url);
       const ytRes = await fetch(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -50,7 +53,9 @@ async function startServer() {
         redirect: 'follow'
       });
       
+      console.log(" [PROXY] YouTube response status:", ytRes.status);
       if (!ytRes.ok) {
+        console.log(" [PROXY] YouTube fetch failed:", ytRes.status, ytRes.statusText);
         const errorText = await ytRes.text().catch(() => "Sem detalhes");
         console.error(`[YouTube Proxy] Erro ${ytRes.status}: ${errorText.substring(0, 100)}`);
         throw new Error(`YouTube respondeu com erro ${ytRes.status}`);
